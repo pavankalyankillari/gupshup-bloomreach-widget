@@ -1,55 +1,107 @@
-// Gupshup WhatsApp Widget — iframe content only (no Bloomreach chrome).
-// This is what a marketer sees embedded inside a Bloomreach campaign node
-// when they add the "Gupshup" step, analogous to the Rokt widget PoC.
+// Gupshup WhatsApp Message Composer — iframe content only (no Bloomreach chrome).
+// Phase 1 configuration UI: template selection, variables, media, CTA buttons,
+// campaign metadata (read-only), consent, and Preview / Send Test / Save actions.
+// No campaign builder, segmentation, analytics, journey builder, AI agent, or
+// customer management here — that's explicitly out of scope for this component.
 //
 // Implements Bloomreach's real Widget Webhook postMessage protocol, per:
 // https://documentation.bloomreach.com/engagement/docs/configure-and-implement-widget-webhooks
 // widget_hello -> app_hello -> widget_initialized -> (on Save/Test) app_request_state -> widget_state
 
+// Mock Bloomreach customer/event attributes a variable or dynamic URL param can bind to.
+const CUSTOMER_ATTRIBUTES = [
+  { value: "customer.first_name", label: "Customer — First name" },
+  { value: "customer.last_name", label: "Customer — Last name" },
+  { value: "customer.email", label: "Customer — Email" },
+  { value: "customer.phone", label: "Customer — Phone" },
+  { value: "event.properties.order_id", label: "Event — Order ID" },
+  { value: "event.properties.order_total", label: "Event — Order total" },
+  { value: "event.properties.item_count", label: "Event — Item count" },
+  { value: "event.properties.eta", label: "Event — Delivery ETA" },
+  { value: "event.properties.product_category", label: "Event — Product category" },
+  { value: "event.properties.discount_percent", label: "Event — Discount %" }
+];
+
 const TEMPLATES = [
   {
     id: "order_confirmation",
     label: "Order Confirmation",
+    category: "UTILITY",
     description: "Sent after checkout completes",
-    hasMedia: false,
     body: "Hi {{1}}, your order #{{2}} has been confirmed! Total: {{3}}",
-    variables: [
-      { key: "1", label: "Customer Name", placeholder: "{{ customer.first_name }}", default: "{{ customer.first_name }}", sample: "Aarav" },
-      { key: "2", label: "Order ID", placeholder: "{{ event.properties.order_id }}", default: "{{ event.properties.order_id }}", sample: "10432" },
-      { key: "3", label: "Order Total", placeholder: "{{ event.properties.order_total }}", default: "{{ event.properties.order_total }}", sample: "₹2,499" }
-    ]
-  },
-  {
-    id: "cart_abandonment_reminder",
-    label: "Cart Abandonment Reminder",
-    description: "Active cart or payment step viewers",
-    hasMedia: true,
-    body: "Hey {{1}}, you left {{2}} item(s) in your cart. Complete your purchase before it's gone!",
-    variables: [
-      { key: "1", label: "Customer Name", placeholder: "{{ customer.first_name }}", default: "{{ customer.first_name }}", sample: "Priya" },
-      { key: "2", label: "Item Count", placeholder: "{{ event.properties.item_count }}", default: "{{ event.properties.item_count }}", sample: "3" }
-    ]
-  },
-  {
-    id: "delivery_update",
-    label: "Delivery Update",
-    description: "Sent when order status changes to out-for-delivery",
     hasMedia: false,
-    body: "Your order #{{1}} is out for delivery and will arrive by {{2}}.",
+    mediaType: null,
     variables: [
-      { key: "1", label: "Order ID", placeholder: "{{ event.properties.order_id }}", default: "{{ event.properties.order_id }}", sample: "10432" },
-      { key: "2", label: "ETA", placeholder: "{{ event.properties.eta }}", default: "{{ event.properties.eta }}", sample: "6:00 PM today" }
+      { key: "1", label: "Customer Name", attribute: "customer.first_name", sample: "Aarav" },
+      { key: "2", label: "Order ID", attribute: "event.properties.order_id", sample: "10432" },
+      { key: "3", label: "Order Total", attribute: "event.properties.order_total", sample: "₹2,499" }
+    ],
+    buttons: []
+  },
+  {
+    id: "order_shipped",
+    label: "Order Shipped",
+    category: "UTILITY",
+    description: "Sent when order status changes to shipped",
+    body: "Your order #{{1}} is on its way! Expected delivery: {{2}}.",
+    hasMedia: false,
+    mediaType: null,
+    variables: [
+      { key: "1", label: "Order ID", attribute: "event.properties.order_id", sample: "10432" },
+      { key: "2", label: "ETA", attribute: "event.properties.eta", sample: "6:00 PM today" }
+    ],
+    buttons: [
+      { type: "url", label: "Track Order", urlBase: "https://track.example.com/", dynamic: true, attribute: "event.properties.order_id", sample: "10432" }
+    ]
+  },
+  {
+    id: "abandoned_cart",
+    label: "Abandoned Cart",
+    category: "MARKETING",
+    description: "Active cart or payment step viewers",
+    body: "Hey {{1}}, you left {{2}} item(s) in your cart. Complete your purchase before it's gone!",
+    hasMedia: true,
+    mediaType: "Image",
+    variables: [
+      { key: "1", label: "Customer Name", attribute: "customer.first_name", sample: "Priya" },
+      { key: "2", label: "Item Count", attribute: "event.properties.item_count", sample: "3" }
+    ],
+    buttons: [
+      { type: "quick_reply", label: "Complete Purchase" },
+      { type: "quick_reply", label: "Not Interested" }
     ]
   },
   {
     id: "product_recommendation",
     label: "Product Recommendation",
+    category: "MARKETING",
     description: "High-intent browsers, no purchase in 7 days",
-    hasMedia: true,
     body: "{{1}}, based on your interest in {{2}}, check out our latest picks for you!",
+    hasMedia: true,
+    mediaType: "Image",
     variables: [
-      { key: "1", label: "Customer Name", placeholder: "{{ customer.first_name }}", default: "{{ customer.first_name }}", sample: "Rohan" },
-      { key: "2", label: "Product Category", placeholder: "{{ event.properties.product_category }}", default: "{{ event.properties.product_category }}", sample: "running shoes" }
+      { key: "1", label: "Customer Name", attribute: "customer.first_name", sample: "Rohan" },
+      { key: "2", label: "Product Category", attribute: "event.properties.product_category", sample: "running shoes" }
+    ],
+    buttons: [
+      { type: "url", label: "Shop Now", urlBase: "https://shop.example.com/", dynamic: true, attribute: "event.properties.product_category", sample: "running-shoes" }
+    ]
+  },
+  {
+    id: "promotional_offer",
+    label: "Promotional Offer",
+    category: "MARKETING",
+    description: "Seasonal or limited-time discount campaigns",
+    body: "{{1}}, enjoy {{2}}% off your next order — today only!",
+    hasMedia: true,
+    mediaType: "Image",
+    variables: [
+      { key: "1", label: "Customer Name", attribute: "customer.first_name", sample: "Meera" },
+      { key: "2", label: "Discount Percent", attribute: "event.properties.discount_percent", sample: "20" }
+    ],
+    buttons: [
+      { type: "phone", label: "Call Us", phone: "+911234567890" },
+      { type: "quick_reply", label: "Redeem Now" }
     ]
   }
 ];
@@ -57,45 +109,108 @@ const TEMPLATES = [
 // PROPOSED — Gupshup's real WhatsApp send endpoint is TBD; placeholder only.
 const GUPSHUP_SEND_URL = "https://api.gupshup.io/br/messages/whatsapp";
 
+const BUTTON_ICON = { url: "&#128279;", phone: "&#128222;", quick_reply: "&#8617;" };
+
+// ---------------------------------------------------------------------
+// DOM refs
+// ---------------------------------------------------------------------
+
+const loginScreen = document.getElementById("loginScreen");
+const skeletonWrap = document.getElementById("skeletonWrap");
+const widgetContent = document.getElementById("widgetContent");
+const loginSubmit = document.getElementById("loginSubmit");
+const loginEmail = document.getElementById("loginEmail");
+const loginProject = document.getElementById("loginProject");
+const loginPassword = document.getElementById("loginPassword");
+const signedInUser = document.getElementById("signedInUser");
+const signedInProject = document.getElementById("signedInProject");
+
 const ddTrigger = document.getElementById("ddTrigger");
 const ddMenu = document.getElementById("ddMenu");
 const ddTitle = document.getElementById("ddTitle");
 const ddSub = document.getElementById("ddSub");
+const ddCategory = document.getElementById("ddCategory");
+
 const variablesContainer = document.getElementById("variablesContainer");
-const mediaField = document.getElementById("mediaField");
+const variablesEmpty = document.getElementById("variablesEmpty");
+
+const mediaCard = document.getElementById("mediaCard");
+const mediaTypeLabel = document.getElementById("mediaTypeLabel");
 const mediaUrlInput = document.getElementById("mediaUrl");
-const previewTemplateName = document.getElementById("previewTemplateName");
-const jsonBlock = document.getElementById("jsonBlock");
-const jsonToggle = document.getElementById("jsonToggle");
-const flowActionLabel = document.getElementById("flowActionLabel");
-const actionSend = document.getElementById("actionSend");
-const actionSkip = document.getElementById("actionSkip");
+const mediaError = document.getElementById("mediaError");
+
+const ctaCard = document.getElementById("ctaCard");
+const ctaEmpty = document.getElementById("ctaEmpty");
+const buttonsContainer = document.getElementById("buttonsContainer");
+
 const consentCategory = document.getElementById("consentCategory");
 const generalConsent = document.getElementById("generalConsent");
 const handshakeStatus = document.getElementById("handshakeStatus");
-const waBubble = document.getElementById("waBubble");
+
 const waMedia = document.getElementById("waMedia");
+const waBubble = document.getElementById("waBubble");
+const waButtons = document.getElementById("waButtons");
+
+const validationSummary = document.getElementById("validationSummary");
+const previewBtn = document.getElementById("previewBtn");
+const testBtn = document.getElementById("testBtn");
+const saveBtn = document.getElementById("saveBtn");
+const actionFeedback = document.getElementById("actionFeedback");
+
+const jsonToggle = document.getElementById("jsonToggle");
+const jsonBlock = document.getElementById("jsonBlock");
+const toast = document.getElementById("toast");
+
+// ---------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------
 
 let selectedTemplateId = TEMPLATES[0].id;
-let selectedAction = "send_message";
-let currentVarValues = {};
+let varState = {};   // key -> { mode: 'attribute'|'custom', attribute, custom }
+let buttonState = {}; // index -> { mode, attribute, custom }
 
 function getSelectedTemplate() {
   return TEMPLATES.find((t) => t.id === selectedTemplateId);
 }
+
+function resetStateForTemplate(tpl) {
+  varState = {};
+  tpl.variables.forEach((v) => {
+    varState[v.key] = { mode: "attribute", attribute: v.attribute, custom: "" };
+  });
+  buttonState = {};
+  tpl.buttons.forEach((b, i) => {
+    if (b.dynamic) buttonState[i] = { mode: "attribute", attribute: b.attribute, custom: "" };
+  });
+  mediaUrlInput.value = "";
+}
+
+function resolvedValue(state) {
+  return state.mode === "attribute" ? `{{ ${state.attribute} }}` : state.custom;
+}
+
+// ---------------------------------------------------------------------
+// Template dropdown
+// ---------------------------------------------------------------------
 
 function populateDropdownMenu() {
   ddMenu.innerHTML = "";
   TEMPLATES.forEach((t) => {
     const opt = document.createElement("div");
     opt.className = "dd-option";
-    opt.innerHTML = `<div class="dd-option-title">${t.label}</div><div class="dd-option-sub">${t.description}</div>`;
+    opt.innerHTML = `
+      <div class="dd-option-main">
+        <div class="dd-option-title">${t.label}</div>
+        <div class="dd-option-sub">${t.description}</div>
+      </div>
+      <span class="category-badge ${t.category.toLowerCase()}">${t.category}</span>
+    `;
     opt.addEventListener("click", () => {
       selectedTemplateId = t.id;
+      resetStateForTemplate(t);
       syncDropdownTrigger();
       ddMenu.classList.remove("open");
-      renderVariableFields();
-      updatePreview();
+      renderAll();
     });
     ddMenu.appendChild(opt);
   });
@@ -105,69 +220,239 @@ function syncDropdownTrigger() {
   const tpl = getSelectedTemplate();
   ddTitle.textContent = tpl.label;
   ddSub.textContent = tpl.description;
+  ddCategory.textContent = tpl.category;
+  ddCategory.className = "category-badge " + tpl.category.toLowerCase();
 }
 
 ddTrigger.addEventListener("click", (e) => {
   e.stopPropagation();
   ddMenu.classList.toggle("open");
 });
-
 document.addEventListener("click", () => ddMenu.classList.remove("open"));
+
+// ---------------------------------------------------------------------
+// Variables
+// ---------------------------------------------------------------------
 
 function renderVariableFields() {
   const tpl = getSelectedTemplate();
   variablesContainer.innerHTML = "";
-  currentVarValues = {};
+  variablesEmpty.style.display = tpl.variables.length ? "none" : "block";
 
   tpl.variables.forEach((v) => {
-    currentVarValues[v.key] = v.default;
+    const state = varState[v.key];
 
     const row = document.createElement("div");
     row.className = "var-row";
 
-    const tag = document.createElement("span");
-    tag.className = "var-tag";
-    tag.textContent = `{{${v.key}}}`;
+    const top = document.createElement("div");
+    top.className = "var-row-top";
+    top.innerHTML = `<span class="var-tag">{{${v.key}}}</span><span class="var-label">${v.label}</span>`;
+    row.appendChild(top);
 
-    const wrap = document.createElement("div");
-    wrap.className = "var-row-body";
+    const toggle = document.createElement("div");
+    toggle.className = "var-source-toggle";
+    const attrBtn = document.createElement("button");
+    attrBtn.type = "button";
+    attrBtn.className = "var-source-btn" + (state.mode === "attribute" ? " active" : "");
+    attrBtn.textContent = "Bloomreach attribute";
+    const customBtn = document.createElement("button");
+    customBtn.type = "button";
+    customBtn.className = "var-source-btn" + (state.mode === "custom" ? " active" : "");
+    customBtn.textContent = "Custom value";
+    toggle.appendChild(attrBtn);
+    toggle.appendChild(customBtn);
+    row.appendChild(toggle);
 
-    const label = document.createElement("div");
-    label.className = "var-label";
-    label.textContent = v.label;
+    const fieldWrap = document.createElement("div");
+    row.appendChild(fieldWrap);
 
-    const input = document.createElement("input");
-    input.className = "field-input";
-    input.placeholder = v.placeholder;
-    input.value = v.default;
-    input.addEventListener("input", () => {
-      currentVarValues[v.key] = input.value;
+    const errorEl = document.createElement("div");
+    errorEl.className = "field-error";
+    errorEl.style.display = "none";
+    errorEl.textContent = `${v.label} is required.`;
+    row.appendChild(errorEl);
+
+    function renderField() {
+      fieldWrap.innerHTML = "";
+      if (state.mode === "attribute") {
+        const select = document.createElement("select");
+        select.className = "select-input";
+        CUSTOMER_ATTRIBUTES.forEach((a) => {
+          const opt = document.createElement("option");
+          opt.value = a.value;
+          opt.textContent = a.label;
+          if (a.value === state.attribute) opt.selected = true;
+          select.appendChild(opt);
+        });
+        select.addEventListener("change", () => {
+          state.attribute = select.value;
+          errorEl.style.display = "none";
+          updatePreview();
+        });
+        fieldWrap.appendChild(select);
+      } else {
+        const input = document.createElement("input");
+        input.className = "field-input";
+        input.placeholder = "Enter a fixed value";
+        input.value = state.custom;
+        input.addEventListener("input", () => {
+          state.custom = input.value;
+          errorEl.style.display = "none";
+          updatePreview();
+        });
+        fieldWrap.appendChild(input);
+      }
+    }
+
+    attrBtn.addEventListener("click", () => {
+      state.mode = "attribute";
+      attrBtn.classList.add("active");
+      customBtn.classList.remove("active");
+      renderField();
+      updatePreview();
+    });
+    customBtn.addEventListener("click", () => {
+      state.mode = "custom";
+      customBtn.classList.add("active");
+      attrBtn.classList.remove("active");
+      renderField();
       updatePreview();
     });
 
-    wrap.appendChild(label);
-    wrap.appendChild(input);
-    row.appendChild(tag);
-    row.appendChild(wrap);
+    renderField();
     variablesContainer.appendChild(row);
   });
-
-  mediaField.style.display = tpl.hasMedia ? "block" : "none";
 }
 
-// Builds Bloomreach's actual Widget Webhook "webhook" object — this is what
-// gets sent back as widget_state.webhook, and is what Bloomreach's own
-// webhook engine calls at send time (rendering the jinja2 body template
-// with real per-customer values). Not a Gupshup-invented payload shape.
+// ---------------------------------------------------------------------
+// Media
+// ---------------------------------------------------------------------
+
+function renderMediaCard() {
+  const tpl = getSelectedTemplate();
+  mediaCard.style.display = tpl.hasMedia ? "block" : "none";
+  if (tpl.hasMedia) {
+    mediaTypeLabel.textContent = tpl.mediaType;
+  }
+  mediaError.style.display = "none";
+}
+
+// ---------------------------------------------------------------------
+// CTA / Buttons
+// ---------------------------------------------------------------------
+
+function renderButtonsCard() {
+  const tpl = getSelectedTemplate();
+  const hasButtons = tpl.buttons.length > 0;
+  ctaCard.style.display = hasButtons ? "block" : "none";
+  ctaEmpty.style.display = hasButtons ? "none" : "flex";
+  buttonsContainer.innerHTML = "";
+
+  tpl.buttons.forEach((b, i) => {
+    const row = document.createElement("div");
+    row.className = "button-row";
+
+    const icon = document.createElement("div");
+    icon.className = "button-type-icon";
+    icon.innerHTML = BUTTON_ICON[b.type] || "";
+    row.appendChild(icon);
+
+    const body = document.createElement("div");
+    body.className = "button-row-body";
+
+    const label = document.createElement("div");
+    label.className = "button-row-label";
+    label.textContent = b.label + (b.type === "url" ? " (URL button)" : b.type === "phone" ? " (Call button)" : " (Quick reply)");
+    body.appendChild(label);
+
+    if (b.type === "phone") {
+      const hint = document.createElement("div");
+      hint.className = "field-hint";
+      hint.style.marginTop = "0";
+      hint.textContent = b.phone;
+      body.appendChild(hint);
+    } else if (b.type === "quick_reply") {
+      const hint = document.createElement("div");
+      hint.className = "field-hint";
+      hint.style.marginTop = "0";
+      hint.textContent = "No configuration needed — sends a fixed reply payload.";
+      body.appendChild(hint);
+    } else if (b.type === "url" && b.dynamic) {
+      const state = buttonState[i];
+
+      const staticUrl = document.createElement("div");
+      staticUrl.className = "field-hint";
+      staticUrl.style.marginTop = "0";
+      staticUrl.style.marginBottom = "6px";
+      staticUrl.innerHTML = `<code>${b.urlBase}</code>&#8203;<span class="var-tag" style="margin-left:2px;">{{1}}</span>`;
+      body.appendChild(staticUrl);
+
+      const select = document.createElement("select");
+      select.className = "select-input";
+      CUSTOMER_ATTRIBUTES.forEach((a) => {
+        const opt = document.createElement("option");
+        opt.value = a.value;
+        opt.textContent = a.label;
+        if (a.value === state.attribute) opt.selected = true;
+        select.appendChild(opt);
+      });
+      select.addEventListener("change", () => {
+        state.attribute = select.value;
+        updatePreview();
+      });
+      body.appendChild(select);
+    }
+
+    row.appendChild(body);
+    buttonsContainer.appendChild(row);
+  });
+}
+
+// ---------------------------------------------------------------------
+// Preview + payload building
+// ---------------------------------------------------------------------
+
+function renderSampleMessage(tpl) {
+  let text = tpl.body;
+  tpl.variables.forEach((v) => {
+    text = text.split(`{{${v.key}}}`).join(v.sample);
+  });
+  return text;
+}
+
+function renderPreviewButtons(tpl) {
+  waButtons.innerHTML = "";
+  tpl.buttons.forEach((b) => {
+    const chip = document.createElement("div");
+    chip.className = "wa-cta-btn";
+    const iconMap = { url: "&#8599;", phone: "&#128222;", quick_reply: "" };
+    chip.innerHTML = `${iconMap[b.type] || ""} ${b.label}`;
+    waButtons.appendChild(chip);
+  });
+}
+
 function buildWebhookObject(tpl) {
+  const variables = {};
+  tpl.variables.forEach((v) => { variables[v.key] = resolvedValue(varState[v.key]); });
+
+  const buttons = tpl.buttons.map((b, i) => {
+    if (b.type === "url" && b.dynamic) {
+      return { type: b.type, label: b.label, url: b.urlBase + resolvedValue(buttonState[i]) };
+    }
+    if (b.type === "phone") return { type: b.type, label: b.label, phone: b.phone };
+    return { type: b.type, label: b.label };
+  });
+
   const bodyTemplate = {
     channel: "whatsapp",
     template_id: tpl.id,
+    template_category: tpl.category,
     language: "en",
-    variables: { ...currentVarValues },
-    media: tpl.hasMedia ? { type: "image", url: mediaUrlInput.value || null } : null,
-    recipient: "{{ customer.phone }}",
-    action: selectedAction
+    variables,
+    media: tpl.hasMedia ? { type: (tpl.mediaType || "").toLowerCase(), url: mediaUrlInput.value || null } : null,
+    buttons,
+    recipient: "{{ customer.phone }}"
   };
 
   return {
@@ -176,10 +461,10 @@ function buildWebhookObject(tpl) {
     response_handling: "json",
     auth: {
       type: "basic",
-      // Bloomreach's docs show the password omitted only in the app_hello
-      // it sends US (it already has it stored, so it doesn't re-expose it).
-      // The widget_state WE send back must include the real value, or
-      // Bloomreach rejects it with "auth_pass: This field is required."
+      // Bloomreach's docs show the password omitted only in the app_hello it
+      // sends US (it already has it stored). The widget_state WE send back
+      // must include the real value, or Bloomreach rejects it with
+      // "auth_pass: This field is required."
       username: signedInUser.textContent || "demo@gupshup.io",
       password: loginPassword.value || "demopassword"
     },
@@ -194,67 +479,164 @@ function buildWebhookObject(tpl) {
   };
 }
 
-// Renders the template with representative sample data — distinct from the
-// jinja2 merge-field expressions in the variable inputs (those are what
-// actually get sent; this is just so the marketer can see roughly what the
-// message will look like for a real recipient).
-function renderSampleMessage(tpl) {
-  let text = tpl.body;
-  tpl.variables.forEach((v) => {
-    text = text.split(`{{${v.key}}}`).join(v.sample);
-  });
-  return text;
-}
-
 function updatePreview() {
   const tpl = getSelectedTemplate();
-  previewTemplateName.textContent = tpl.label;
-  jsonBlock.textContent = JSON.stringify(buildWebhookObject(tpl), null, 2);
-
   waBubble.textContent = renderSampleMessage(tpl);
   waMedia.style.display = tpl.hasMedia ? "flex" : "none";
+  waMedia.textContent = tpl.hasMedia ? `📷 ${tpl.mediaType} header` : "";
+  renderPreviewButtons(tpl);
+  jsonBlock.textContent = JSON.stringify(buildWebhookObject(tpl), null, 2);
 }
 
-function setAction(action) {
-  selectedAction = action;
-  actionSend.classList.toggle("active", action === "send_message");
-  actionSkip.classList.toggle("active", action === "skip_message");
-  flowActionLabel.textContent = action === "send_message" ? "Send Message" : "Skip Message";
+function renderAll() {
+  renderVariableFields();
+  renderMediaCard();
+  renderButtonsCard();
   updatePreview();
 }
 
-actionSend.addEventListener("click", () => setAction("send_message"));
-actionSkip.addEventListener("click", () => setAction("skip_message"));
+// ---------------------------------------------------------------------
+// Validation
+// ---------------------------------------------------------------------
+
+function validate() {
+  const tpl = getSelectedTemplate();
+  const errors = [];
+
+  const varRows = variablesContainer.querySelectorAll(".var-row");
+  tpl.variables.forEach((v, i) => {
+    const state = varState[v.key];
+    const invalid = state.mode === "custom" ? !state.custom.trim() : !state.attribute;
+    const row = varRows[i];
+    const errorEl = row ? row.querySelector(".field-error") : null;
+    if (invalid) {
+      errors.push(`${v.label} is required.`);
+      if (errorEl) errorEl.style.display = "flex";
+    } else if (errorEl) {
+      errorEl.style.display = "none";
+    }
+  });
+
+  if (tpl.hasMedia) {
+    const url = mediaUrlInput.value.trim();
+    if (!url || !url.startsWith("https://")) {
+      errors.push("Media URL is required and must start with https://.");
+      mediaError.style.display = "flex";
+      mediaUrlInput.classList.add("has-error");
+    } else {
+      mediaError.style.display = "none";
+      mediaUrlInput.classList.remove("has-error");
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+function showValidationSummary(errors) {
+  if (!errors.length) {
+    validationSummary.style.display = "none";
+    return;
+  }
+  validationSummary.style.display = "block";
+  validationSummary.innerHTML = `<strong>Fix the following before continuing:</strong><ul>${errors.map((e) => `<li>${e}</li>`).join("")}</ul>`;
+}
+
+// ---------------------------------------------------------------------
+// Actions: Preview / Send Test Message / Save
+// ---------------------------------------------------------------------
+
+function setActionFeedback(text, kind) {
+  actionFeedback.textContent = text;
+  actionFeedback.className = "action-feedback" + (kind ? " " + kind : "");
+}
+
+function withLoading(btn, label, run) {
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> ${label}`;
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.innerHTML = original;
+    run();
+  }, 800);
+}
+
+previewBtn.addEventListener("click", () => {
+  const { valid, errors } = validate();
+  showValidationSummary(errors);
+  if (!valid) {
+    setActionFeedback("Preview blocked — see the issues above.", "error");
+    return;
+  }
+  updatePreview();
+  setActionFeedback("Preview is up to date.", "success");
+  document.querySelector(".preview-card").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+
+testBtn.addEventListener("click", () => {
+  const { valid, errors } = validate();
+  showValidationSummary(errors);
+  if (!valid) {
+    setActionFeedback("Can't send a test message until the issues above are fixed.", "error");
+    return;
+  }
+  setActionFeedback("");
+  withLoading(testBtn, "Sending&hellip;", () => {
+    setActionFeedback("Test message sent (mock) to +91XXXXXXXXXX.", "success");
+    showToast("Mock webhook call sent ✓ — Gupshup would respond 202 Accepted with a message_id.");
+  });
+});
+
+saveBtn.addEventListener("click", () => {
+  const { valid, errors } = validate();
+  showValidationSummary(errors);
+  if (!valid) {
+    setActionFeedback("Can't save until the issues above are fixed.", "error");
+    return;
+  }
+  setActionFeedback("");
+  withLoading(saveBtn, "Saving&hellip;", () => {
+    setActionFeedback("Saved. Bloomreach's own Save button on this node will persist the same configuration.", "success");
+    showToast("Widget configuration saved.");
+  });
+});
+
+function showToast(message, duration = 3200) {
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove("show"), duration);
+}
 
 jsonToggle.addEventListener("click", () => {
   const visible = jsonBlock.style.display !== "none";
   jsonBlock.style.display = visible ? "none" : "block";
-  jsonToggle.innerHTML = (visible ? "&#9656; Show" : "&#9662; Hide") + " webhook body (JSON)";
+  jsonToggle.innerHTML = (visible ? "&#9656; Advanced: view" : "&#9662; Advanced: hide") + " webhook payload";
 });
 
-mediaUrlInput.addEventListener("input", updatePreview);
+mediaUrlInput.addEventListener("input", () => {
+  mediaError.style.display = "none";
+  mediaUrlInput.classList.remove("has-error");
+  updatePreview();
+});
 consentCategory.addEventListener("input", updatePreview);
 generalConsent.addEventListener("change", updatePreview);
 
-// Mocked sign-in gate — no real auth, just a stand-in screen before the
-// widget content is revealed. Independent of the real Bloomreach handshake
-// below, which runs regardless of whether the marketer has clicked through
-// this mock screen yet.
-const loginScreen = document.getElementById("loginScreen");
-const widgetContent = document.getElementById("widgetContent");
-const loginSubmit = document.getElementById("loginSubmit");
-const loginEmail = document.getElementById("loginEmail");
-const loginProject = document.getElementById("loginProject");
-const loginPassword = document.getElementById("loginPassword");
-const signedInUser = document.getElementById("signedInUser");
-const signedInProject = document.getElementById("signedInProject");
+// ---------------------------------------------------------------------
+// Mocked sign-in gate -> loading skeleton -> content
+// ---------------------------------------------------------------------
 
 loginSubmit.addEventListener("click", () => {
   signedInUser.textContent = loginEmail.value || "demo@gupshup.io";
   signedInProject.textContent = loginProject.value || "default";
   loginScreen.style.display = "none";
-  widgetContent.style.display = "grid";
-  updatePreview();
+  skeletonWrap.style.display = "block";
+
+  setTimeout(() => {
+    skeletonWrap.style.display = "none";
+    widgetContent.style.display = "block";
+    updatePreview();
+  }, 650);
 });
 
 document.getElementById("signOutLink").addEventListener("click", (e) => {
@@ -270,8 +652,7 @@ document.getElementById("signOutLink").addEventListener("click", (e) => {
 // ---------------------------------------------------------------------
 
 const SUPPORTED_VERSION = 1;
-let appOrigin = null; // captured from the first message Bloomreach sends us
-let existingWidgetState = null;
+let appOrigin = null;
 
 function isEmbedded() {
   return window.parent && window.parent !== window;
@@ -279,11 +660,11 @@ function isEmbedded() {
 
 function sendToParent(message) {
   if (!isEmbedded()) return;
-  // Bloomreach's own docs hardcode a single origin (e.g. https://app.exponea.com)
-  // for their example, but Bloomreach runs on multiple regional clusters — using
-  // '*' for the handshake and then locking to event.origin afterwards (below)
-  // is more robust than guessing a fixed domain. PROPOSED deviation from the
-  // doc's literal example, for that reason.
+  // Bloomreach's docs hardcode a single origin for their example, but
+  // Bloomreach runs on multiple regional clusters — using '*' for the
+  // handshake and then locking to event.origin afterwards is more robust
+  // than guessing a fixed domain. PROPOSED deviation from the doc's
+  // literal example, for that reason.
   window.parent.postMessage(message, appOrigin || "*");
 }
 
@@ -300,13 +681,7 @@ function handleParentMessage(event) {
     appOrigin = event.origin;
     setHandshakeStatus("connected", "Connected to Bloomreach");
 
-    if (msg.webhook) {
-      hydrateFromExistingWebhook(msg.webhook);
-    }
-    if (msg.widget_state) {
-      existingWidgetState = msg.widget_state;
-    }
-
+    if (msg.webhook) hydrateFromExistingWebhook(msg.webhook);
     sendToParent({ message_type: "widget_initialized" });
   } else if (msg.message_type === "app_reject") {
     setHandshakeStatus("rejected", "Bloomreach widget API version not supported (got v" + SUPPORTED_VERSION + ")");
@@ -314,7 +689,7 @@ function handleParentMessage(event) {
     sendToParent({
       message_type: "widget_state",
       webhook: buildWebhookObject(getSelectedTemplate()),
-      widget_state: { selectedTemplateId, selectedAction }
+      widget_state: { selectedTemplateId }
     });
   } else if (msg.message_type === "errors") {
     console.warn("Bloomreach validation errors:", msg.errors);
@@ -322,34 +697,35 @@ function handleParentMessage(event) {
 }
 
 // Best-effort: if Bloomreach is editing an existing node, try to re-select
-// the template/action this webhook was previously configured for by
-// inspecting the saved body template for a recognizable template_id.
+// the template this webhook was previously configured for.
 function hydrateFromExistingWebhook(webhook) {
   try {
     const parsedBody = JSON.parse(webhook.body || "{}");
     if (parsedBody.template_id && TEMPLATES.some((t) => t.id === parsedBody.template_id)) {
       selectedTemplateId = parsedBody.template_id;
+      const tpl = getSelectedTemplate();
+      resetStateForTemplate(tpl);
       syncDropdownTrigger();
-      renderVariableFields();
-    }
-    if (parsedBody.action) {
-      setAction(parsedBody.action);
+      if (parsedBody.media && parsedBody.media.url) mediaUrlInput.value = parsedBody.media.url;
     }
   } catch (e) {
     // Not JSON, or shape changed — fall back to defaults silently.
   }
   if (webhook.consent_category) consentCategory.value = webhook.consent_category;
   if (typeof webhook.general_consent === "boolean") generalConsent.checked = webhook.general_consent;
+  renderAll();
 }
 
 window.addEventListener("message", handleParentMessage);
 
+// ---------------------------------------------------------------------
 // Init
+// ---------------------------------------------------------------------
+
+resetStateForTemplate(getSelectedTemplate());
 populateDropdownMenu();
 syncDropdownTrigger();
-renderVariableFields();
-setAction("send_message");
-updatePreview();
+renderAll();
 
 if (isEmbedded()) {
   sendToParent({

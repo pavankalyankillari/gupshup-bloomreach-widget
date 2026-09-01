@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Gupshup WhatsApp Widget</title>
+<title>Gupshup WhatsApp Message Composer</title>
 <!-- Bump the ?v= query param on these two whenever styles.css/app.js change —
      GitHub Pages doesn't allow custom cache headers, so this is the only
      reliable way to bust stale browser/CDN caching of these static files. -->
-<link rel="stylesheet" href="styles.css?v=4" />
+<link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
 
@@ -16,14 +16,15 @@
   third party (Gupshup) supplies to Bloomreach, embedded via:
     <iframe src="http://localhost:2000/"></iframe>
   There is no title bar / tabs / Cancel-Done buttons here — those belong
-  to Bloomreach's own campaign-node chrome that wraps this iframe.
+  to Bloomreach's own campaign-node chrome that wraps this iframe. This is
+  the Phase 1 configuration UI only — no campaign builder, segmentation,
+  analytics, journey builder, AI agent, or customer management here.
 -->
 
 <div class="widget-root">
 
   <!-- Mocked sign-in gate — no real auth, just a stand-in screen shown before
-       the widget content renders, so the "signed in as ..." line below has
-       something to point back to. -->
+       the widget content renders. -->
   <div class="login-screen" id="loginScreen">
     <div class="login-card">
       <div class="login-logo">
@@ -46,111 +47,202 @@
     </div>
   </div>
 
-  <div class="widget-grid" id="widgetContent" style="display:none;">
+  <!-- Loading skeleton — shown briefly after sign-in while "templates load" -->
+  <div class="skeleton-wrap" id="skeletonWrap" style="display:none;">
+    <div class="skeleton-bar" style="width:40%;"></div>
+    <div class="skeleton-grid">
+      <div class="skeleton-col">
+        <div class="skeleton-card" style="height:110px;"></div>
+        <div class="skeleton-card" style="height:170px;"></div>
+        <div class="skeleton-card" style="height:90px;"></div>
+      </div>
+      <div class="skeleton-col">
+        <div class="skeleton-card" style="height:320px;"></div>
+      </div>
+    </div>
+  </div>
 
-    <!-- LEFT: configuration form -->
-    <div class="form-col">
-      <h1 class="page-title">WhatsApp Templates</h1>
-      <div class="project-row">
-        Project: <strong id="signedInProject">default</strong>
-        <span class="dot">&middot;</span>
-        signed in as <strong id="signedInUser">234234</strong>
-        <span class="dot">&middot;</span>
-        <a href="#" class="link" id="signOutLink">Sign out</a>
+  <div class="widget-content" id="widgetContent" style="display:none;">
+
+    <header class="top-bar">
+      <div class="top-bar-title">
+        <h1 class="page-title">WhatsApp Message Composer</h1>
+        <p class="page-sub">Configure the WhatsApp message this campaign step will send.</p>
+      </div>
+      <div class="top-bar-meta">
+        <div class="project-row">
+          <strong id="signedInProject">default</strong>
+          <span class="dot">&middot;</span>
+          <span id="signedInUser">234234</span>
+          <span class="dot">&middot;</span>
+          <a href="#" class="link" id="signOutLink">Sign out</a>
+        </div>
+        <div class="handshake-status" id="handshakeStatus">Checking Bloomreach connection&hellip;</div>
+      </div>
+    </header>
+
+    <div class="content-grid">
+
+      <!-- LEFT: configuration -->
+      <div class="form-col">
+
+        <!-- Template -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">WhatsApp Template</h2>
+          </div>
+          <label class="field-label">Template</label>
+          <div class="dd" id="templateDropdown">
+            <button type="button" class="dd-trigger" id="ddTrigger">
+              <span class="dd-trigger-main">
+                <span class="dd-trigger-title" id="ddTitle">&nbsp;</span>
+                <span class="dd-trigger-sub" id="ddSub">&nbsp;</span>
+              </span>
+              <span class="category-badge" id="ddCategory">&nbsp;</span>
+              <span class="dd-chevron">&#9662;</span>
+            </button>
+            <div class="dd-menu" id="ddMenu"></div>
+          </div>
+        </section>
+
+        <!-- Variables -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">Template Variables</h2>
+            <span class="card-hint">Map each variable to a Bloomreach attribute, or enter a fixed value.</span>
+          </div>
+          <div id="variablesContainer"></div>
+          <div class="empty-inline" id="variablesEmpty" style="display:none;">This template doesn't use any variables.</div>
+        </section>
+
+        <!-- Media (conditional) -->
+        <section class="card" id="mediaCard" style="display:none;">
+          <div class="card-header">
+            <h2 class="card-title">Media</h2>
+          </div>
+          <label class="field-label">Media type</label>
+          <div class="static-pill" id="mediaTypeLabel">Image</div>
+          <label class="field-label" style="margin-top:14px;">Media URL</label>
+          <input type="text" class="field-input" id="mediaUrl" placeholder="https://cdn.example.com/promo-banner.jpg" />
+          <div class="field-error" id="mediaError" style="display:none;">Enter a valid media URL (starting with https://).</div>
+          <div class="field-hint">Upload isn't wired up yet in this PoC — paste a hosted image URL, or leave blank while iterating.</div>
+        </section>
+
+        <!-- CTA / Buttons (conditional) -->
+        <section class="card" id="ctaCard" style="display:none;">
+          <div class="card-header">
+            <h2 class="card-title">CTA / Buttons</h2>
+            <span class="card-hint">From the selected template's approved buttons.</span>
+          </div>
+          <div id="buttonsContainer"></div>
+        </section>
+        <div class="empty-card" id="ctaEmpty" style="display:none;">
+          <span class="empty-card-title">No CTA buttons</span>
+          <span class="empty-card-sub">This template doesn't include any buttons.</span>
+        </div>
+
+        <!-- Campaign metadata -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">Campaign Metadata</h2>
+            <span class="card-hint">Provided by Bloomreach — read-only</span>
+          </div>
+          <div class="two-col">
+            <div>
+              <label class="field-label">Campaign Name</label>
+              <input type="text" class="field-input" value="Post-Purchase WhatsApp Follow-up" readonly />
+            </div>
+            <div>
+              <label class="field-label">Campaign ID</label>
+              <input type="text" class="field-input mono" value="camp_9f21ac" readonly />
+            </div>
+            <div>
+              <label class="field-label">Action Name</label>
+              <input type="text" class="field-input" value="Send WhatsApp Message" readonly />
+            </div>
+            <div>
+              <label class="field-label">Action ID</label>
+              <input type="text" class="field-input mono" value="action_0021" readonly />
+            </div>
+          </div>
+        </section>
+
+        <!-- Consent -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">Consent</h2>
+          </div>
+          <div class="field-hint">
+            If a category is set, Bloomreach filters to customers consenting to that
+            category. Otherwise it falls back to <code>general_consent</code>.
+          </div>
+          <label class="field-label">Consent category</label>
+          <input type="text" class="field-input" id="consentCategory" placeholder="e.g. marketing_whatsapp (leave empty to use general consent)" />
+          <label class="checkbox-row">
+            <input type="checkbox" id="generalConsent" checked />
+            Use general consent (when no category is set)
+          </label>
+        </section>
+
+        <div class="callout">
+          <span class="callout-icon">&#9432;</span>
+          <div>
+            <strong>Mock integration preview.</strong>
+            <div class="callout-links">
+              <a href="#" class="link">Widget webhooks in scenarios docs</a>
+              <span class="dot">&middot;</span>
+              <a href="#" class="link">Webhooks integration setup</a>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="callout">
-        <span class="callout-icon">&#9432;</span>
-        <div>
-          <strong>Mock integration preview.</strong>
-          <div class="callout-links">
-            <a href="#" class="link">Widget webhooks in scenarios docs</a>
-            <span class="dot">&middot;</span>
-            <a href="#" class="link">Webhooks integration setup</a>
+      <!-- RIGHT: preview -->
+      <div class="preview-col">
+        <div class="preview-sticky">
+          <div class="card preview-card">
+            <div class="card-header">
+              <h2 class="card-title">Message Preview</h2>
+            </div>
+
+            <div class="wa-preview-wrap">
+              <div class="wa-preview">
+                <div class="wa-preview-header">WhatsApp Business &middot; Sample preview</div>
+                <div class="wa-media" id="waMedia" style="display:none;"></div>
+                <div class="wa-bubble" id="waBubble"></div>
+                <div class="wa-buttons" id="waButtons"></div>
+                <div class="wa-meta">Sample data shown &mdash; not the actual merge fields sent</div>
+              </div>
+            </div>
+
+            <div class="validation-summary" id="validationSummary" style="display:none;"></div>
+
+            <div class="action-row">
+              <button class="btn btn-secondary" id="previewBtn">Preview</button>
+              <button class="btn btn-secondary" id="testBtn">Send Test Message</button>
+              <button class="btn btn-primary" id="saveBtn">Save</button>
+            </div>
+            <div class="action-feedback" id="actionFeedback"></div>
+
+            <button class="link json-toggle" id="jsonToggle">&#9656; Advanced: view webhook payload</button>
+            <pre class="json-block" id="jsonBlock" style="display:none;"></pre>
+          </div>
+
+          <div class="powered-by">
+            <span class="powered-by-badge">G</span>
+            Powered by <strong>Gupshup</strong>
           </div>
         </div>
       </div>
 
-      <div class="handshake-status" id="handshakeStatus">Checking Bloomreach connection&hellip;</div>
-
-      <label class="field-label">Template</label>
-      <div class="dd" id="templateDropdown">
-        <button type="button" class="dd-trigger" id="ddTrigger">
-          <span>
-            <span class="dd-trigger-title" id="ddTitle">Order Confirmation</span>
-            <span class="dd-trigger-sub" id="ddSub">Sent after checkout completes</span>
-          </span>
-          <span class="dd-chevron">&#9662;</span>
-        </button>
-        <div class="dd-menu" id="ddMenu"></div>
-      </div>
-
-      <div id="variablesContainer"></div>
-
-      <div id="mediaField" class="field-block" style="display:none;">
-        <label class="field-label">Header Media URL</label>
-        <input type="text" id="mediaUrl" class="field-input" placeholder="https://cdn.example.com/promo-banner.jpg" />
-      </div>
-
-      <label class="field-label" style="margin-top:24px;">Action</label>
-      <div class="action-row">
-        <button class="pill pill-primary active" id="actionSend" data-action="send_message">
-          <span class="pill-icon">+</span> Send Message
-        </button>
-        <button class="pill pill-secondary" id="actionSkip" data-action="skip_message">
-          <span class="pill-icon">&minus;</span> Skip Message
-        </button>
-      </div>
-
-      <label class="field-label" style="margin-top:24px;">Consent</label>
-      <div class="field-hint">
-        If a category is set, Bloomreach filters to customers consenting to that
-        category. Otherwise it falls back to <code>general_consent</code>.
-      </div>
-
-      <label class="field-label">Consent category</label>
-      <input type="text" class="field-input" id="consentCategory" placeholder="e.g. marketing_whatsapp (leave empty to use general consent)" />
-
-      <label class="checkbox-row">
-        <input type="checkbox" id="generalConsent" checked />
-        Use general consent (when no category is set)
-      </label>
     </div>
-
-    <!-- RIGHT: preview -->
-    <div class="preview-col">
-      <div class="preview-title">Preview</div>
-
-      <div class="flow-diagram">
-        <div class="flow-box flow-bloomreach">
-          <span class="flow-badge">b</span> bloomreach
-        </div>
-        <div class="flow-arrow">
-          <div class="flow-arrow-label" id="flowActionLabel">Send Message</div>
-          <div class="flow-arrow-line"></div>
-        </div>
-        <div class="flow-box flow-gupshup">
-          <div class="flow-box-title">GUPSHUP</div>
-          <div class="flow-box-sub" id="previewTemplateName">Order Confirmation</div>
-        </div>
-      </div>
-
-      <div class="wa-preview-wrap">
-        <div class="wa-preview">
-          <div class="wa-preview-header">WhatsApp Business &middot; Sample preview</div>
-          <div class="wa-media" id="waMedia" style="display:none;">&#128247; Header media</div>
-          <div class="wa-bubble" id="waBubble"></div>
-          <div class="wa-meta">Delivered via Gupshup &middot; sample data, not the actual merge fields sent</div>
-        </div>
-      </div>
-
-      <button class="link json-toggle" id="jsonToggle">&#9656; Show webhook body (JSON)</button>
-      <pre class="json-block" id="jsonBlock" style="display:none;"></pre>
-    </div>
-
   </div>
+
+  <div class="toast" id="toast"></div>
+
 </div>
 
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
