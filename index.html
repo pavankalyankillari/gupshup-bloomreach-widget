@@ -68,6 +68,8 @@
         </div>
       </div>
 
+      <div class="handshake-status" id="handshakeStatus">Checking Bloomreach connection&hellip;</div>
+
       <label class="field-label">Template</label>
       <div class="dd" id="templateDropdown">
         <button type="button" class="dd-trigger" id="ddTrigger">
@@ -104,10 +106,10 @@
       </div>
 
       <label class="field-label">Consent category</label>
-      <input type="text" class="field-input" placeholder="e.g. marketing_whatsapp (leave empty to use general consent)" />
+      <input type="text" class="field-input" id="consentCategory" placeholder="e.g. marketing_whatsapp (leave empty to use general consent)" />
 
       <label class="checkbox-row">
-        <input type="checkbox" checked />
+        <input type="checkbox" id="generalConsent" checked />
         Use general consent (when no category is set)
       </label>
     </div>

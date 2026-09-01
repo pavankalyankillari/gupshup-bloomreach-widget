@@ -22,6 +22,15 @@ body {
   gap: 56px;
 }
 
+/* Grid items default to min-width:auto, so a long unbroken line inside
+   .json-block (e.g. an escaped JSON string in "body") would otherwise blow
+   out the column past its fr share. min-width:0 lets .json-block's own
+   overflow-x:auto handle scrolling instead. */
+.form-col,
+.preview-col {
+  min-width: 0;
+}
+
 .page-title {
   font-size: 21px;
   font-weight: 700;
@@ -61,6 +70,33 @@ body {
 
 .callout-icon { color: #2f6fed; margin-top: 1px; }
 .callout-links { margin-top: 4px; }
+
+.handshake-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-family: "SF Mono", Menlo, monospace;
+  color: #8a919e;
+  margin-bottom: 20px;
+}
+
+.handshake-status::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c6cad1;
+}
+
+.handshake-status.connected { color: #1a8f4c; }
+.handshake-status.connected::before { background: #1fb15f; }
+
+.handshake-status.standalone { color: #b7791f; }
+.handshake-status.standalone::before { background: #e0a92f; }
+
+.handshake-status.rejected { color: #a3121a; }
+.handshake-status.rejected::before { background: #d94848; }
 
 .field-label {
   display: block;
