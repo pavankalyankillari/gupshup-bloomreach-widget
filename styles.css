@@ -56,16 +56,11 @@ code {
 }
 
 .login-logo-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: #5e34f1;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
+  vertical-align: middle;
+  object-fit: cover;
 }
 
 .login-title { font-size: 19px; font-weight: 700; margin: 0 0 6px 0; }
@@ -586,16 +581,11 @@ code {
 }
 .powered-by strong { color: #6b7280; }
 .powered-by-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 16px;
   height: 16px;
   border-radius: 4px;
-  background: #5e34f1;
-  color: #fff;
-  font-size: 9px;
-  font-weight: 800;
+  vertical-align: middle;
+  object-fit: cover;
 }
 
 .toast {
