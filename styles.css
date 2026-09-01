@@ -188,6 +188,97 @@ code {
 }
 
 .card-title { font-size: 14.5px; font-weight: 600; margin: 0; color: #16181f; }
+
+/* campaign type selector */
+.campaign-type-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.campaign-type-option {
+  text-align: left;
+  background: #fff;
+  border: 1.5px solid #e6e2f3;
+  border-radius: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.campaign-type-option.active {
+  border-color: #5e34f1;
+  background: #f8f6ff;
+}
+
+.campaign-type-option.disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.campaign-type-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.campaign-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #5e34f1;
+  color: #fff;
+  font-size: 13px;
+}
+
+.campaign-type-radio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid #cabdfa;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.campaign-type-option.active .campaign-type-radio {
+  border-color: #5e34f1;
+}
+.campaign-type-option.active .campaign-type-radio::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: #5e34f1;
+}
+
+.campaign-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #6b7280;
+  background: #f1f2f5;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.campaign-type-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1a1f36;
+  margin-bottom: 4px;
+}
+
+.campaign-type-desc {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
+}
 .card-hint { font-size: 12px; color: #9aa1ac; }
 
 .empty-card {

@@ -144,6 +144,8 @@ const buttonsContainer = document.getElementById("buttonsContainer");
 const consentCategory = document.getElementById("consentCategory");
 const generalConsent = document.getElementById("generalConsent");
 const handshakeStatus = document.getElementById("handshakeStatus");
+const campaignTypeOneWay = document.getElementById("campaignTypeOneWay");
+const campaignTypeInteractive = document.getElementById("campaignTypeInteractive");
 
 const waMedia = document.getElementById("waMedia");
 const waBubble = document.getElementById("waBubble");
@@ -164,6 +166,7 @@ const toast = document.getElementById("toast");
 // ---------------------------------------------------------------------
 
 let selectedTemplateId = TEMPLATES[0].id;
+let campaignType = "one_way"; // "interactive" is disabled/coming soon — see campaign-type card
 let varState = {};    // key -> plain string (a Jinja2 expression or a fixed value)
 let buttonState = {}; // index -> plain string, for dynamic URL button params
 
@@ -565,6 +568,14 @@ mediaUrlInput.addEventListener("input", () => {
 consentCategory.addEventListener("input", updatePreview);
 generalConsent.addEventListener("change", updatePreview);
 
+// Campaign type — "interactive" is disabled (Phase 2, coming soon), so this
+// only ever toggles back to the already-active "one_way" option.
+campaignTypeOneWay.addEventListener("click", () => {
+  campaignType = "one_way";
+  campaignTypeOneWay.classList.add("active");
+  campaignTypeInteractive.classList.remove("active");
+});
+
 // ---------------------------------------------------------------------
 // Mocked sign-in gate -> loading skeleton -> content
 // ---------------------------------------------------------------------
@@ -632,7 +643,7 @@ function handleParentMessage(event) {
     sendToParent({
       message_type: "widget_state",
       webhook: buildWebhookObject(getSelectedTemplate()),
-      widget_state: { selectedTemplateId }
+      widget_state: { selectedTemplateId, campaignType }
     });
   } else if (msg.message_type === "errors") {
     console.warn("Bloomreach validation errors:", msg.errors);

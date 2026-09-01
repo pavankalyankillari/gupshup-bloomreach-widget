@@ -8,7 +8,7 @@
 <!-- Bump the ?v= query param on these two whenever styles.css/app.js change —
      GitHub Pages doesn't allow custom cache headers, so this is the only
      reliable way to bust stale browser/CDN caching of these static files. -->
-<link rel="stylesheet" href="styles.css?v=8" />
+<link rel="stylesheet" href="styles.css?v=9" />
 </head>
 <body>
 
@@ -86,6 +86,31 @@
 
       <!-- LEFT: configuration -->
       <div class="form-col">
+
+        <!-- Campaign type -->
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">Campaign Type</h2>
+          </div>
+          <div class="campaign-type-row">
+            <button type="button" class="campaign-type-option active" id="campaignTypeOneWay">
+              <div class="campaign-type-top">
+                <span class="campaign-type-icon one-way">&#8594;</span>
+                <span class="campaign-type-radio"></span>
+              </div>
+              <div class="campaign-type-title">One-way</div>
+              <div class="campaign-type-desc">For campaigns where you don't expect a reply. Best for notifications and CTAs (link or phone call).</div>
+            </button>
+            <button type="button" class="campaign-type-option disabled" id="campaignTypeInteractive" disabled>
+              <div class="campaign-type-top">
+                <span class="campaign-type-icon interactive">&#10024;</span>
+                <span class="campaign-type-badge">Coming soon</span>
+              </div>
+              <div class="campaign-type-title">Interactive (Two-way)</div>
+              <div class="campaign-type-desc">Surveys, quizzes, and bot conversations. Expects the customer to reply.</div>
+            </button>
+          </div>
+        </section>
 
         <!-- Template -->
         <section class="card">
@@ -244,6 +269,6 @@
 
 </div>
 
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>
