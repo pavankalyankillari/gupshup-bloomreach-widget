@@ -7,7 +7,7 @@ html, body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: #f6f7f9;
+  background: #f6f4ff;
   color: #16181f;
   -webkit-font-smoothing: antialiased;
 }
@@ -17,7 +17,7 @@ body {
 }
 
 .link {
-  color: #2f6fed;
+  color: #5e34f1;
   text-decoration: none;
   cursor: pointer;
 }
@@ -51,7 +51,7 @@ code {
   gap: 8px;
   font-size: 15px;
   font-weight: 700;
-  color: #ff5a1f;
+  color: #5e34f1;
   margin-bottom: 20px;
 }
 
@@ -62,7 +62,7 @@ code {
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: #ff5a1f;
+  background: #5e34f1;
   color: #fff;
   font-size: 12px;
   font-weight: 800;
@@ -77,13 +77,13 @@ code {
   padding: 11px 16px;
   border-radius: 6px;
   border: none;
-  background: #ff5a1f;
+  background: #5e34f1;
   color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
-.btn-signin:hover { background: #e64f18; }
+.btn-signin:hover { background: #4c2ad1; }
 
 .login-footnote { font-size: 11.5px; color: #9aa1ac; text-align: center; margin: 16px 0 0 0; }
 
@@ -176,11 +176,11 @@ code {
 
 .card {
   background: #ffffff;
-  border: 1px solid #e7e9ee;
+  border: 1px solid #e6e2f3;
   border-radius: 12px;
   padding: 20px 22px;
   margin-bottom: 16px;
-  box-shadow: 0 1px 2px rgba(16, 19, 25, 0.03);
+  box-shadow: 0 1px 2px rgba(94, 52, 241, 0.04);
 }
 
 .card-header {
@@ -231,7 +231,7 @@ code {
   background: #fff;
   font-family: inherit;
 }
-.field-input:focus { outline: none; border-color: #2f6fed; box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
+.field-input:focus { outline: none; border-color: #5e34f1; box-shadow: 0 0 0 3px rgba(94,52,241,0.12); }
 .field-input[readonly] { background: #f7f8fa; color: #6b7280; }
 .field-input.mono { font-family: "SF Mono", Menlo, monospace; font-size: 12.5px; }
 .field-input.has-error { border-color: #d94848; }
@@ -298,8 +298,8 @@ code {
   flex-shrink: 0;
   white-space: nowrap;
 }
-.category-badge.marketing { color: #8628c9; background: #f3e8ff; }
-.category-badge.utility { color: #2358c9; background: #e3ecff; }
+.category-badge.marketing { color: #ff3964; background: #fee7e7; }
+.category-badge.utility { color: #128577; background: #e3f5f2; }
 
 .dd-menu {
   display: none;
@@ -360,7 +360,7 @@ code {
   color: #6b7280;
   cursor: pointer;
 }
-.var-source-btn.active { background: #eef4ff; border-color: #b6cdfb; color: #2358c9; }
+.var-source-btn.active { background: #f0ecff; border-color: #cabdfa; color: #5e34f1; }
 
 .select-input {
   width: 100%;
@@ -377,7 +377,7 @@ code {
   background-position: right 12px center;
   padding-right: 30px;
 }
-.select-input:focus { outline: none; border-color: #2f6fed; box-shadow: 0 0 0 3px rgba(47,111,237,0.12); }
+.select-input:focus { outline: none; border-color: #5e34f1; box-shadow: 0 0 0 3px rgba(94,52,241,0.12); }
 
 /* CTA button rows */
 .button-row {
@@ -393,8 +393,8 @@ code {
   width: 26px;
   height: 26px;
   border-radius: 7px;
-  background: #eef4ff;
-  color: #2358c9;
+  background: #f0ecff;
+  color: #5e34f1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -514,8 +514,8 @@ code {
 .btn-secondary { background: #fff; border-color: #d7dbe0; color: #1a1f36; }
 .btn-secondary:hover:not(:disabled) { background: #f5f6f8; }
 
-.btn-primary { background: #ff5a1f; color: #fff; }
-.btn-primary:hover:not(:disabled) { background: #e64f18; }
+.btn-primary { background: #5e34f1; color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #4c2ad1; }
 
 .spinner {
   width: 12px;
@@ -548,7 +548,7 @@ code {
   margin-top: 16px;
   display: block;
 }
-.json-toggle:hover { color: #2f6fed; }
+.json-toggle:hover { color: #5e34f1; }
 
 .json-block {
   background: #1a1f36;
@@ -562,8 +562,8 @@ code {
 }
 
 .callout {
-  background: #eef4ff;
-  border: 1px solid #d6e4ff;
+  background: #f6f4ff;
+  border: 1px solid #e5deff;
   border-radius: 8px;
   padding: 12px 14px;
   display: flex;
@@ -572,7 +572,7 @@ code {
   align-items: flex-start;
   color: #3d4250;
 }
-.callout-icon { color: #2f6fed; margin-top: 1px; }
+.callout-icon { color: #5e34f1; margin-top: 1px; }
 .callout-links { margin-top: 4px; }
 
 .powered-by {
@@ -592,7 +592,7 @@ code {
   width: 16px;
   height: 16px;
   border-radius: 4px;
-  background: #ff5a1f;
+  background: #5e34f1;
   color: #fff;
   font-size: 9px;
   font-weight: 800;
