@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gupshup WhatsApp Widget</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!--
+  This page is the actual iframe content — the "your application URL" a
+  third party (Gupshup) supplies to Bloomreach, embedded via:
+    <iframe src="http://localhost:2000/"></iframe>
+  There is no title bar / tabs / Cancel-Done buttons here — those belong
+  to Bloomreach's own campaign-node chrome that wraps this iframe.
+-->
+
+<div class="widget-root">
+
+  <!-- Mocked sign-in gate — no real auth, just a stand-in screen shown before
+       the widget content renders, so the "signed in as ..." line below has
+       something to point back to. -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">
+        <span class="login-logo-badge">G</span> Gupshup
+      </div>
+      <h2 class="login-title">Sign in to connect Gupshup</h2>
+      <p class="login-sub">Authorize this widget to configure WhatsApp messaging for your Bloomreach campaigns.</p>
+
+      <label class="field-label">Project</label>
+      <input type="text" class="field-input" id="loginProject" value="default" />
+
+      <label class="field-label">Email</label>
+      <input type="email" class="field-input" id="loginEmail" placeholder="you@company.com" value="demo@gupshup.io" />
+
+      <label class="field-label">Password</label>
+      <input type="password" class="field-input" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" value="demopassword" />
+
+      <button class="btn-signin" id="loginSubmit">Sign In</button>
+      <p class="login-footnote">Mock integration preview — no real authentication occurs here.</p>
+    </div>
+  </div>
+
+  <div class="widget-grid" id="widgetContent" style="display:none;">
+
+    <!-- LEFT: configuration form -->
+    <div class="form-col">
+      <h1 class="page-title">WhatsApp Templates</h1>
+      <div class="project-row">
+        Project: <strong id="signedInProject">default</strong>
+        <span class="dot">&middot;</span>
+        signed in as <strong id="signedInUser">234234</strong>
+        <span class="dot">&middot;</span>
+        <a href="#" class="link" id="signOutLink">Sign out</a>
+      </div>
+
+      <div class="callout">
+        <span class="callout-icon">&#9432;</span>
+        <div>
+          <strong>Mock integration preview.</strong>
+          <div class="callout-links">
+            <a href="#" class="link">Widget webhooks in scenarios docs</a>
+            <span class="dot">&middot;</span>
+            <a href="#" class="link">Webhooks integration setup</a>
+          </div>
+        </div>
+      </div>
+
+      <label class="field-label">Template</label>
+      <div class="dd" id="templateDropdown">
+        <button type="button" class="dd-trigger" id="ddTrigger">
+          <span>
+            <span class="dd-trigger-title" id="ddTitle">Order Confirmation</span>
+            <span class="dd-trigger-sub" id="ddSub">Sent after checkout completes</span>
+          </span>
+          <span class="dd-chevron">&#9662;</span>
+        </button>
+        <div class="dd-menu" id="ddMenu"></div>
+      </div>
+
+      <div id="variablesContainer"></div>
+
+      <div id="mediaField" class="field-block" style="display:none;">
+        <label class="field-label">Header Media URL</label>
+        <input type="text" id="mediaUrl" class="field-input" placeholder="https://cdn.example.com/promo-banner.jpg" />
+      </div>
+
+      <label class="field-label" style="margin-top:24px;">Action</label>
+      <div class="action-row">
+        <button class="pill pill-primary active" id="actionSend" data-action="send_message">
+          <span class="pill-icon">+</span> Send Message
+        </button>
+        <button class="pill pill-secondary" id="actionSkip" data-action="skip_message">
+          <span class="pill-icon">&minus;</span> Skip Message
+        </button>
+      </div>
+
+      <label class="field-label" style="margin-top:24px;">Consent</label>
+      <div class="field-hint">
+        If a category is set, Bloomreach filters to customers consenting to that
+        category. Otherwise it falls back to <code>general_consent</code>.
+      </div>
+
+      <label class="field-label">Consent category</label>
+      <input type="text" class="field-input" placeholder="e.g. marketing_whatsapp (leave empty to use general consent)" />
+
+      <label class="checkbox-row">
+        <input type="checkbox" checked />
+        Use general consent (when no category is set)
+      </label>
+    </div>
+
+    <!-- RIGHT: preview -->
+    <div class="preview-col">
+      <div class="preview-title">Preview</div>
+
+      <div class="flow-diagram">
+        <div class="flow-box flow-bloomreach">
+          <span class="flow-badge">b</span> bloomreach
+        </div>
+        <div class="flow-arrow">
+          <div class="flow-arrow-label" id="flowActionLabel">Send Message</div>
+          <div class="flow-arrow-line"></div>
+        </div>
+        <div class="flow-box flow-gupshup">
+          <div class="flow-box-title">GUPSHUP</div>
+          <div class="flow-box-sub" id="previewTemplateName">Order Confirmation</div>
+        </div>
+      </div>
+
+      <button class="link json-toggle" id="jsonToggle">&#9656; Show webhook body (JSON)</button>
+      <pre class="json-block" id="jsonBlock" style="display:none;"></pre>
+    </div>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
