@@ -12,10 +12,11 @@ const TEMPLATES = [
     label: "Order Confirmation",
     description: "Sent after checkout completes",
     hasMedia: false,
+    body: "Hi {{1}}, your order #{{2}} has been confirmed! Total: {{3}}",
     variables: [
-      { key: "1", label: "Customer Name", placeholder: "{{ customer.first_name }}", default: "{{ customer.first_name }}" },
-      { key: "2", label: "Order ID", placeholder: "{{ event.properties.order_id }}", default: "{{ event.properties.order_id }}" },
-      { key: "3", label: "Order Total", placeholder: "{{ event.properties.order_total }}", default: "{{ event.properties.order_total }}" }
+      { key: "1", label: "Customer Name", placeholder: "{{ customer.first_name }}", default: "{{ customer.first_name }}", sample: "Aarav" },
+      { key: "2", label: "Order ID", placeholder: "{{ event.properties.order_id }}", default: "{{ event.properties.order_id }}", sample: "10432" },
+      { key: "3", label: "Order Total", placeholder: "{{ event.properties.order_total }}", default: "{{ event.properties.order_total }}", sample: "₹2,499" }
     ]
   },
   {
@@ -23,9 +24,10 @@ const TEMPLATES = [
     label: "Cart Abandonment Reminder",
     description: "Active cart or payment step viewers",
     hasMedia: true,
+    body: "Hey {{1}}, you left {{2}} item(s) in your cart. Complete your purchase before it's gone!",
     variables: [
-      { key: "1", label: "Customer Name", placeholder: "{{ customer.first_name }}", default: "{{ customer.first_name }}" },
-      { key: "2", label: "Item Count", placeholder: "{{ event.properties.item_count }}", default: "{{ event.properties.item_count }}" }
+      { key: "1", label: "Customer Name", placeholder: "{{ customer.first_name }}", default: "{{ customer.first_name }}", sample: "Priya" },
+      { key: "2", label: "Item Count", placeholder: "{{ event.properties.item_count }}", default: "{{ event.properties.item_count }}", sample: "3" }
     ]
   },
   {
@@ -33,9 +35,10 @@ const TEMPLATES = [
     label: "Delivery Update",
     description: "Sent when order status changes to out-for-delivery",
     hasMedia: false,
+    body: "Your order #{{1}} is out for delivery and will arrive by {{2}}.",
     variables: [
-      { key: "1", label: "Order ID", placeholder: "{{ event.properties.order_id }}", default: "{{ event.properties.order_id }}" },
-      { key: "2", label: "ETA", placeholder: "{{ event.properties.eta }}", default: "{{ event.properties.eta }}" }
+      { key: "1", label: "Order ID", placeholder: "{{ event.properties.order_id }}", default: "{{ event.properties.order_id }}", sample: "10432" },
+      { key: "2", label: "ETA", placeholder: "{{ event.properties.eta }}", default: "{{ event.properties.eta }}", sample: "6:00 PM today" }
     ]
   },
   {
@@ -43,9 +46,10 @@ const TEMPLATES = [
     label: "Product Recommendation",
     description: "High-intent browsers, no purchase in 7 days",
     hasMedia: true,
+    body: "{{1}}, based on your interest in {{2}}, check out our latest picks for you!",
     variables: [
-      { key: "1", label: "Customer Name", placeholder: "{{ customer.first_name }}", default: "{{ customer.first_name }}" },
-      { key: "2", label: "Product Category", placeholder: "{{ event.properties.product_category }}", default: "{{ event.properties.product_category }}" }
+      { key: "1", label: "Customer Name", placeholder: "{{ customer.first_name }}", default: "{{ customer.first_name }}", sample: "Rohan" },
+      { key: "2", label: "Product Category", placeholder: "{{ event.properties.product_category }}", default: "{{ event.properties.product_category }}", sample: "running shoes" }
     ]
   }
 ];
@@ -69,6 +73,8 @@ const actionSkip = document.getElementById("actionSkip");
 const consentCategory = document.getElementById("consentCategory");
 const generalConsent = document.getElementById("generalConsent");
 const handshakeStatus = document.getElementById("handshakeStatus");
+const waBubble = document.getElementById("waBubble");
+const waMedia = document.getElementById("waMedia");
 
 let selectedTemplateId = TEMPLATES[0].id;
 let selectedAction = "send_message";
@@ -185,10 +191,25 @@ function buildWebhookObject(tpl) {
   };
 }
 
+// Renders the template with representative sample data — distinct from the
+// jinja2 merge-field expressions in the variable inputs (those are what
+// actually get sent; this is just so the marketer can see roughly what the
+// message will look like for a real recipient).
+function renderSampleMessage(tpl) {
+  let text = tpl.body;
+  tpl.variables.forEach((v) => {
+    text = text.split(`{{${v.key}}}`).join(v.sample);
+  });
+  return text;
+}
+
 function updatePreview() {
   const tpl = getSelectedTemplate();
   previewTemplateName.textContent = tpl.label;
   jsonBlock.textContent = JSON.stringify(buildWebhookObject(tpl), null, 2);
+
+  waBubble.textContent = renderSampleMessage(tpl);
+  waMedia.style.display = tpl.hasMedia ? "flex" : "none";
 }
 
 function setAction(action) {

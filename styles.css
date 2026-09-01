@@ -381,6 +381,61 @@ body {
   border-top: 5px solid #c6cad1;
 }
 
+.wa-preview-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.wa-preview {
+  width: 260px;
+  background: #e5ddd5;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.wa-preview-header {
+  font-size: 10.5px;
+  color: #4a5d55;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.wa-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 90px;
+  background: #cfd6cf;
+  border-radius: 8px 8px 0 0;
+  font-size: 12px;
+  color: #4a5d55;
+  margin-bottom: -1px;
+}
+
+.wa-bubble {
+  background: #dcf8c6;
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #1a1f36;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+  white-space: pre-wrap;
+}
+
+.wa-media + .wa-bubble {
+  border-radius: 0 0 8px 8px;
+}
+
+.wa-meta {
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
 .json-toggle {
   background: none;
   border: none;
