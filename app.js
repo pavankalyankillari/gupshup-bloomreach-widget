@@ -176,9 +176,12 @@ function buildWebhookObject(tpl) {
     response_handling: "json",
     auth: {
       type: "basic",
-      // password intentionally omitted here — Bloomreach stores it securely
-      // server-side once entered; the widget never re-reads it back in plaintext.
-      username: (document.getElementById("signedInUser") || {}).textContent || "demo@gupshup.io"
+      // Bloomreach's docs show the password omitted only in the app_hello
+      // it sends US (it already has it stored, so it doesn't re-expose it).
+      // The widget_state WE send back must include the real value, or
+      // Bloomreach rejects it with "auth_pass: This field is required."
+      username: signedInUser.textContent || "demo@gupshup.io",
+      password: loginPassword.value || "demopassword"
     },
     headers: [
       { name: "Content-Type", value: "application/json", type: "public" }
