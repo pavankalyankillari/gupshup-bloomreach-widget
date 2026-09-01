@@ -340,40 +340,6 @@ code {
 }
 .var-label { font-size: 13px; font-weight: 600; color: #1a1f36; }
 
-.var-source-toggle {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-.var-source-btn {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 9px;
-  border-radius: 14px;
-  border: 1px solid #d7dbe0;
-  background: #fff;
-  color: #6b7280;
-  cursor: pointer;
-}
-.var-source-btn.active { background: #f0ecff; border-color: #cabdfa; color: #5e34f1; }
-
-.select-input {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid #d7dbe0;
-  border-radius: 6px;
-  font-size: 13.5px;
-  color: #1a1f36;
-  background: #fff;
-  font-family: inherit;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a919e'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 30px;
-}
-.select-input:focus { outline: none; border-color: #5e34f1; box-shadow: 0 0 0 3px rgba(94,52,241,0.12); }
-
 /* CTA button rows */
 .button-row {
   display: flex;
