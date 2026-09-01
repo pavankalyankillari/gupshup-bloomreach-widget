@@ -8,19 +8,13 @@
 // https://documentation.bloomreach.com/engagement/docs/configure-and-implement-widget-webhooks
 // widget_hello -> app_hello -> widget_initialized -> (on Save/Test) app_request_state -> widget_state
 
-// Mock Bloomreach customer/event attributes a variable or dynamic URL param can bind to.
-const CUSTOMER_ATTRIBUTES = [
-  { value: "customer.first_name", label: "Customer — First name" },
-  { value: "customer.last_name", label: "Customer — Last name" },
-  { value: "customer.email", label: "Customer — Email" },
-  { value: "customer.phone", label: "Customer — Phone" },
-  { value: "event.properties.order_id", label: "Event — Order ID" },
-  { value: "event.properties.order_total", label: "Event — Order total" },
-  { value: "event.properties.item_count", label: "Event — Item count" },
-  { value: "event.properties.eta", label: "Event — Delivery ETA" },
-  { value: "event.properties.product_category", label: "Event — Product category" },
-  { value: "event.properties.discount_percent", label: "Event — Discount %" }
-];
+// There's no Bloomreach API to enumerate a project's real customer/event
+// properties (confirmed against their docs — schemas are custom per project
+// and only browsable in the Data Manager UI). Bloomreach's own Personalization
+// panel (Customer properties / Trigger event properties, with a "copy to
+// clipboard" Jinja2 expression) is the real source of truth for this — so
+// these inputs are plain text, prefilled with a plausible starting guess the
+// marketer is expected to verify/replace via that panel, not a fake picker.
 
 const TEMPLATES = [
   {
@@ -32,9 +26,9 @@ const TEMPLATES = [
     hasMedia: false,
     mediaType: null,
     variables: [
-      { key: "1", label: "Customer Name", attribute: "customer.first_name", sample: "Aarav" },
-      { key: "2", label: "Order ID", attribute: "event.properties.order_id", sample: "10432" },
-      { key: "3", label: "Order Total", attribute: "event.properties.order_total", sample: "₹2,499" }
+      { key: "1", label: "Customer Name", default: "{{ customer.first_name }}", sample: "Aarav" },
+      { key: "2", label: "Order ID", default: "{{ event.properties.order_id }}", sample: "10432" },
+      { key: "3", label: "Order Total", default: "{{ event.properties.order_total }}", sample: "₹2,499" }
     ],
     buttons: []
   },
@@ -47,11 +41,11 @@ const TEMPLATES = [
     hasMedia: false,
     mediaType: null,
     variables: [
-      { key: "1", label: "Order ID", attribute: "event.properties.order_id", sample: "10432" },
-      { key: "2", label: "ETA", attribute: "event.properties.eta", sample: "6:00 PM today" }
+      { key: "1", label: "Order ID", default: "{{ event.properties.order_id }}", sample: "10432" },
+      { key: "2", label: "ETA", default: "{{ event.properties.eta }}", sample: "6:00 PM today" }
     ],
     buttons: [
-      { type: "url", label: "Track Order", urlBase: "https://track.example.com/", dynamic: true, attribute: "event.properties.order_id", sample: "10432" }
+      { type: "url", label: "Track Order", urlBase: "https://track.example.com/", dynamic: true, default: "{{ event.properties.order_id }}", sample: "10432" }
     ]
   },
   {
@@ -63,8 +57,8 @@ const TEMPLATES = [
     hasMedia: true,
     mediaType: "Image",
     variables: [
-      { key: "1", label: "Customer Name", attribute: "customer.first_name", sample: "Priya" },
-      { key: "2", label: "Item Count", attribute: "event.properties.item_count", sample: "3" }
+      { key: "1", label: "Customer Name", default: "{{ customer.first_name }}", sample: "Priya" },
+      { key: "2", label: "Item Count", default: "{{ event.properties.item_count }}", sample: "3" }
     ],
     buttons: [
       { type: "quick_reply", label: "Complete Purchase" },
@@ -80,11 +74,11 @@ const TEMPLATES = [
     hasMedia: true,
     mediaType: "Image",
     variables: [
-      { key: "1", label: "Customer Name", attribute: "customer.first_name", sample: "Rohan" },
-      { key: "2", label: "Product Category", attribute: "event.properties.product_category", sample: "running shoes" }
+      { key: "1", label: "Customer Name", default: "{{ customer.first_name }}", sample: "Rohan" },
+      { key: "2", label: "Product Category", default: "{{ event.properties.product_category }}", sample: "running shoes" }
     ],
     buttons: [
-      { type: "url", label: "Shop Now", urlBase: "https://shop.example.com/", dynamic: true, attribute: "event.properties.product_category", sample: "running-shoes" }
+      { type: "url", label: "Shop Now", urlBase: "https://shop.example.com/", dynamic: true, default: "{{ event.properties.product_category }}", sample: "running-shoes" }
     ]
   },
   {
@@ -96,8 +90,8 @@ const TEMPLATES = [
     hasMedia: true,
     mediaType: "Image",
     variables: [
-      { key: "1", label: "Customer Name", attribute: "customer.first_name", sample: "Meera" },
-      { key: "2", label: "Discount Percent", attribute: "event.properties.discount_percent", sample: "20" }
+      { key: "1", label: "Customer Name", default: "{{ customer.first_name }}", sample: "Meera" },
+      { key: "2", label: "Discount Percent", default: "{{ event.properties.discount_percent }}", sample: "20" }
     ],
     buttons: [
       { type: "phone", label: "Call Us", phone: "+911234567890" },
@@ -106,8 +100,12 @@ const TEMPLATES = [
   }
 ];
 
-// PROPOSED — Gupshup's real WhatsApp send endpoint is TBD; placeholder only.
-const GUPSHUP_SEND_URL = "https://api.gupshup.io/br/messages/whatsapp";
+// PROPOSED — Gupshup's real production WhatsApp send endpoint is still TBD.
+// This points at our own mock receiver (backend/ — WhatsAppWebhookController)
+// so Bloomreach's "Test webhook" button, and eventually real sends, have a
+// live 200-OK endpoint to exercise the integration against instead of 404ing
+// on a placeholder domain. Swap for the real Gupshup endpoint once defined.
+const GUPSHUP_SEND_URL = "https://begin-adelaide-nice-pete.trycloudflare.com/webhooks/whatsapp/send";
 
 const BUTTON_ICON = { url: "&#128279;", phone: "&#128222;", quick_reply: "&#8617;" };
 
@@ -166,8 +164,8 @@ const toast = document.getElementById("toast");
 // ---------------------------------------------------------------------
 
 let selectedTemplateId = TEMPLATES[0].id;
-let varState = {};   // key -> { mode: 'attribute'|'custom', attribute, custom }
-let buttonState = {}; // index -> { mode, attribute, custom }
+let varState = {};    // key -> plain string (a Jinja2 expression or a fixed value)
+let buttonState = {}; // index -> plain string, for dynamic URL button params
 
 function getSelectedTemplate() {
   return TEMPLATES.find((t) => t.id === selectedTemplateId);
@@ -175,18 +173,12 @@ function getSelectedTemplate() {
 
 function resetStateForTemplate(tpl) {
   varState = {};
-  tpl.variables.forEach((v) => {
-    varState[v.key] = { mode: "attribute", attribute: v.attribute, custom: "" };
-  });
+  tpl.variables.forEach((v) => { varState[v.key] = v.default; });
   buttonState = {};
   tpl.buttons.forEach((b, i) => {
-    if (b.dynamic) buttonState[i] = { mode: "attribute", attribute: b.attribute, custom: "" };
+    if (b.dynamic) buttonState[i] = b.default;
   });
   mediaUrlInput.value = "";
-}
-
-function resolvedValue(state) {
-  return state.mode === "attribute" ? `{{ ${state.attribute} }}` : state.custom;
 }
 
 // ---------------------------------------------------------------------
@@ -240,8 +232,6 @@ function renderVariableFields() {
   variablesEmpty.style.display = tpl.variables.length ? "none" : "block";
 
   tpl.variables.forEach((v) => {
-    const state = varState[v.key];
-
     const row = document.createElement("div");
     row.className = "var-row";
 
@@ -250,22 +240,16 @@ function renderVariableFields() {
     top.innerHTML = `<span class="var-tag">{{${v.key}}}</span><span class="var-label">${v.label}</span>`;
     row.appendChild(top);
 
-    const toggle = document.createElement("div");
-    toggle.className = "var-source-toggle";
-    const attrBtn = document.createElement("button");
-    attrBtn.type = "button";
-    attrBtn.className = "var-source-btn" + (state.mode === "attribute" ? " active" : "");
-    attrBtn.textContent = "Bloomreach attribute";
-    const customBtn = document.createElement("button");
-    customBtn.type = "button";
-    customBtn.className = "var-source-btn" + (state.mode === "custom" ? " active" : "");
-    customBtn.textContent = "Custom value";
-    toggle.appendChild(attrBtn);
-    toggle.appendChild(customBtn);
-    row.appendChild(toggle);
+    const input = document.createElement("input");
+    input.className = "field-input mono";
+    input.placeholder = "e.g. {{ customer.first_name }}";
+    input.value = varState[v.key];
+    row.appendChild(input);
 
-    const fieldWrap = document.createElement("div");
-    row.appendChild(fieldWrap);
+    const hint = document.createElement("div");
+    hint.className = "field-hint";
+    hint.innerHTML = "Use Bloomreach's <strong>Personalization</strong> panel (Customer / Trigger event properties) to find the exact attribute, then paste its copied expression here.";
+    row.appendChild(hint);
 
     const errorEl = document.createElement("div");
     errorEl.className = "field-error";
@@ -273,54 +257,13 @@ function renderVariableFields() {
     errorEl.textContent = `${v.label} is required.`;
     row.appendChild(errorEl);
 
-    function renderField() {
-      fieldWrap.innerHTML = "";
-      if (state.mode === "attribute") {
-        const select = document.createElement("select");
-        select.className = "select-input";
-        CUSTOMER_ATTRIBUTES.forEach((a) => {
-          const opt = document.createElement("option");
-          opt.value = a.value;
-          opt.textContent = a.label;
-          if (a.value === state.attribute) opt.selected = true;
-          select.appendChild(opt);
-        });
-        select.addEventListener("change", () => {
-          state.attribute = select.value;
-          errorEl.style.display = "none";
-          updatePreview();
-        });
-        fieldWrap.appendChild(select);
-      } else {
-        const input = document.createElement("input");
-        input.className = "field-input";
-        input.placeholder = "Enter a fixed value";
-        input.value = state.custom;
-        input.addEventListener("input", () => {
-          state.custom = input.value;
-          errorEl.style.display = "none";
-          updatePreview();
-        });
-        fieldWrap.appendChild(input);
-      }
-    }
-
-    attrBtn.addEventListener("click", () => {
-      state.mode = "attribute";
-      attrBtn.classList.add("active");
-      customBtn.classList.remove("active");
-      renderField();
-      updatePreview();
-    });
-    customBtn.addEventListener("click", () => {
-      state.mode = "custom";
-      customBtn.classList.add("active");
-      attrBtn.classList.remove("active");
-      renderField();
+    input.addEventListener("input", () => {
+      varState[v.key] = input.value;
+      errorEl.style.display = "none";
+      input.classList.remove("has-error");
       updatePreview();
     });
 
-    renderField();
     variablesContainer.appendChild(row);
   });
 }
@@ -379,8 +322,6 @@ function renderButtonsCard() {
       hint.textContent = "No configuration needed — sends a fixed reply payload.";
       body.appendChild(hint);
     } else if (b.type === "url" && b.dynamic) {
-      const state = buttonState[i];
-
       const staticUrl = document.createElement("div");
       staticUrl.className = "field-hint";
       staticUrl.style.marginTop = "0";
@@ -388,20 +329,20 @@ function renderButtonsCard() {
       staticUrl.innerHTML = `<code>${b.urlBase}</code>&#8203;<span class="var-tag" style="margin-left:2px;">{{1}}</span>`;
       body.appendChild(staticUrl);
 
-      const select = document.createElement("select");
-      select.className = "select-input";
-      CUSTOMER_ATTRIBUTES.forEach((a) => {
-        const opt = document.createElement("option");
-        opt.value = a.value;
-        opt.textContent = a.label;
-        if (a.value === state.attribute) opt.selected = true;
-        select.appendChild(opt);
-      });
-      select.addEventListener("change", () => {
-        state.attribute = select.value;
+      const input = document.createElement("input");
+      input.className = "field-input mono";
+      input.placeholder = "e.g. {{ event.properties.order_id }}";
+      input.value = buttonState[i];
+      input.addEventListener("input", () => {
+        buttonState[i] = input.value;
         updatePreview();
       });
-      body.appendChild(select);
+      body.appendChild(input);
+
+      const hint = document.createElement("div");
+      hint.className = "field-hint";
+      hint.innerHTML = "From Bloomreach's <strong>Personalization</strong> panel — copy the expression and paste it here.";
+      body.appendChild(hint);
     }
 
     row.appendChild(body);
@@ -434,11 +375,11 @@ function renderPreviewButtons(tpl) {
 
 function buildWebhookObject(tpl) {
   const variables = {};
-  tpl.variables.forEach((v) => { variables[v.key] = resolvedValue(varState[v.key]); });
+  tpl.variables.forEach((v) => { variables[v.key] = varState[v.key]; });
 
   const buttons = tpl.buttons.map((b, i) => {
     if (b.type === "url" && b.dynamic) {
-      return { type: b.type, label: b.label, url: b.urlBase + resolvedValue(buttonState[i]) };
+      return { type: b.type, label: b.label, url: b.urlBase + buttonState[i] };
     }
     if (b.type === "phone") return { type: b.type, label: b.label, phone: b.phone };
     return { type: b.type, label: b.label };
@@ -505,15 +446,17 @@ function validate() {
 
   const varRows = variablesContainer.querySelectorAll(".var-row");
   tpl.variables.forEach((v, i) => {
-    const state = varState[v.key];
-    const invalid = state.mode === "custom" ? !state.custom.trim() : !state.attribute;
+    const invalid = !varState[v.key] || !varState[v.key].trim();
     const row = varRows[i];
     const errorEl = row ? row.querySelector(".field-error") : null;
+    const inputEl = row ? row.querySelector(".field-input") : null;
     if (invalid) {
       errors.push(`${v.label} is required.`);
       if (errorEl) errorEl.style.display = "flex";
-    } else if (errorEl) {
-      errorEl.style.display = "none";
+      if (inputEl) inputEl.classList.add("has-error");
+    } else {
+      if (errorEl) errorEl.style.display = "none";
+      if (inputEl) inputEl.classList.remove("has-error");
     }
   });
 
@@ -706,6 +649,19 @@ function hydrateFromExistingWebhook(webhook) {
       const tpl = getSelectedTemplate();
       resetStateForTemplate(tpl);
       syncDropdownTrigger();
+
+      if (parsedBody.variables) {
+        tpl.variables.forEach((v) => {
+          if (parsedBody.variables[v.key] != null) varState[v.key] = parsedBody.variables[v.key];
+        });
+      }
+      if (parsedBody.buttons) {
+        tpl.buttons.forEach((b, i) => {
+          if (b.dynamic && parsedBody.buttons[i] && parsedBody.buttons[i].url) {
+            buttonState[i] = parsedBody.buttons[i].url.replace(b.urlBase, "");
+          }
+        });
+      }
       if (parsedBody.media && parsedBody.media.url) mediaUrlInput.value = parsedBody.media.url;
     }
   } catch (e) {
