@@ -578,27 +578,86 @@ campaignTypeOneWay.addEventListener("click", () => {
 
 // ---------------------------------------------------------------------
 // Mocked sign-in gate -> loading skeleton -> content
+//
+// Session is persisted in localStorage so reopening this iframe (e.g. the
+// marketer re-opens the campaign node) skips straight past the login
+// screen if they already signed in before. Since this runs cross-origin
+// inside Bloomreach's page, some browsers partition/restrict storage for
+// third-party iframes — every access is wrapped so that failure just means
+// "always show the login screen," never a broken page.
 // ---------------------------------------------------------------------
 
-loginSubmit.addEventListener("click", () => {
-  signedInUser.textContent = loginEmail.value || "demo@gupshup.io";
-  signedInProject.textContent = loginProject.value || "default";
-  loginScreen.style.display = "none";
-  skeletonWrap.style.display = "block";
+const SESSION_KEY = "gupshup_widget_session";
 
+function saveSession(email, project) {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ email, project }));
+  } catch (e) {
+    // Storage unavailable (partitioned/blocked third-party context) — the
+    // marketer will just need to sign in again next time. Non-fatal.
+  }
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearSession() {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch (e) {
+    // Nothing to do — worst case the next load just shows the login screen.
+  }
+}
+
+function enterComposer(email, project, skipSkeleton) {
+  signedInUser.textContent = email || "demo@gupshup.io";
+  signedInProject.textContent = project || "default";
+  loginScreen.style.display = "none";
+
+  if (skipSkeleton) {
+    widgetContent.style.display = "block";
+    updatePreview();
+    return;
+  }
+
+  skeletonWrap.style.display = "block";
   setTimeout(() => {
     skeletonWrap.style.display = "none";
     widgetContent.style.display = "block";
     updatePreview();
   }, 650);
+}
+
+loginSubmit.addEventListener("click", () => {
+  const email = loginEmail.value || "demo@gupshup.io";
+  const project = loginProject.value || "default";
+  saveSession(email, project);
+  enterComposer(email, project, false);
 });
 
 document.getElementById("signOutLink").addEventListener("click", (e) => {
   e.preventDefault();
+  clearSession();
   widgetContent.style.display = "none";
   loginScreen.style.display = "flex";
   loginPassword.value = "";
 });
+
+// Restores an existing session, if any — called from Init, below, after
+// template/variable state is set up (enterComposer -> updatePreview depends
+// on it).
+function restoreSessionIfPresent() {
+  const session = loadSession();
+  if (session && session.email) {
+    enterComposer(session.email, session.project, true);
+  }
+}
 
 // ---------------------------------------------------------------------
 // Bloomreach Widget Webhook postMessage handshake
@@ -693,6 +752,7 @@ resetStateForTemplate(getSelectedTemplate());
 populateDropdownMenu();
 syncDropdownTrigger();
 renderAll();
+restoreSessionIfPresent();
 
 if (isEmbedded()) {
   sendToParent({
