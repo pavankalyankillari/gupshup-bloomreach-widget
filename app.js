@@ -109,6 +109,15 @@ const GUPSHUP_SEND_URL = "https://begin-adelaide-nice-pete.trycloudflare.com/web
 
 const BUTTON_ICON = { url: "&#128279;", phone: "&#128222;", quick_reply: "&#8617;" };
 
+// Mock registered WhatsApp Business enterprise accounts/numbers for this
+// Gupshup customer — a real account would list whatever numbers they've
+// actually registered and had verified.
+const ENTERPRISE_ACCOUNTS = [
+  { id: "acct_primary", label: "Gupshup Retail — Primary", phone: "+91 98765 43210", status: "Verified" },
+  { id: "acct_us", label: "Gupshup Retail — US", phone: "+1 415 555 0199", status: "Verified" },
+  { id: "acct_eu_backup", label: "Gupshup Retail — EU (Backup)", phone: "+44 7911 123456", status: "Pending" }
+];
+
 // ---------------------------------------------------------------------
 // DOM refs
 // ---------------------------------------------------------------------
@@ -128,6 +137,13 @@ const ddMenu = document.getElementById("ddMenu");
 const ddTitle = document.getElementById("ddTitle");
 const ddSub = document.getElementById("ddSub");
 const ddCategory = document.getElementById("ddCategory");
+
+const channelWhatsapp = document.getElementById("channelWhatsapp");
+const accountTrigger = document.getElementById("accountTrigger");
+const accountMenu = document.getElementById("accountMenu");
+const accountTitle = document.getElementById("accountTitle");
+const accountSub = document.getElementById("accountSub");
+const accountStatus = document.getElementById("accountStatus");
 
 const variablesContainer = document.getElementById("variablesContainer");
 const variablesEmpty = document.getElementById("variablesEmpty");
@@ -167,6 +183,7 @@ const toast = document.getElementById("toast");
 
 let selectedTemplateId = TEMPLATES[0].id;
 let campaignType = "one_way"; // "interactive" is disabled/coming soon — see campaign-type card
+let selectedAccountId = ENTERPRISE_ACCOUNTS[0].id;
 let varState = {};    // key -> plain string (a Jinja2 expression or a fixed value)
 let buttonState = {}; // index -> plain string, for dynamic URL button params
 
@@ -224,6 +241,50 @@ ddTrigger.addEventListener("click", (e) => {
   ddMenu.classList.toggle("open");
 });
 document.addEventListener("click", () => ddMenu.classList.remove("open"));
+
+// ---------------------------------------------------------------------
+// Enterprise account picker
+// ---------------------------------------------------------------------
+
+function getSelectedAccount() {
+  return ENTERPRISE_ACCOUNTS.find((a) => a.id === selectedAccountId);
+}
+
+function populateAccountMenu() {
+  accountMenu.innerHTML = "";
+  ENTERPRISE_ACCOUNTS.forEach((a) => {
+    const opt = document.createElement("div");
+    opt.className = "dd-option";
+    opt.innerHTML = `
+      <div class="dd-option-main">
+        <div class="dd-option-title">${a.label}</div>
+        <div class="dd-option-sub">${a.phone}</div>
+      </div>
+      <span class="account-status-badge ${a.status.toLowerCase()}">${a.status}</span>
+    `;
+    opt.addEventListener("click", () => {
+      selectedAccountId = a.id;
+      syncAccountTrigger();
+      accountMenu.classList.remove("open");
+      updatePreview();
+    });
+    accountMenu.appendChild(opt);
+  });
+}
+
+function syncAccountTrigger() {
+  const account = getSelectedAccount();
+  accountTitle.textContent = account.label;
+  accountSub.textContent = account.phone;
+  accountStatus.textContent = account.status;
+  accountStatus.className = "account-status-badge " + account.status.toLowerCase();
+}
+
+accountTrigger.addEventListener("click", (e) => {
+  e.stopPropagation();
+  accountMenu.classList.toggle("open");
+});
+document.addEventListener("click", () => accountMenu.classList.remove("open"));
 
 // ---------------------------------------------------------------------
 // Variables
@@ -388,8 +449,10 @@ function buildWebhookObject(tpl) {
     return { type: b.type, label: b.label };
   });
 
+  const account = getSelectedAccount();
   const bodyTemplate = {
     channel: "whatsapp",
+    sender: { account_id: account.id, phone: account.phone },
     template_id: tpl.id,
     template_category: tpl.category,
     language: "en",
@@ -576,6 +639,12 @@ campaignTypeOneWay.addEventListener("click", () => {
   campaignTypeInteractive.classList.remove("active");
 });
 
+// Channel — SMS/RCS are disabled (coming soon), so this only ever toggles
+// back to the already-active WhatsApp option.
+channelWhatsapp.addEventListener("click", () => {
+  channelWhatsapp.classList.add("active");
+});
+
 // ---------------------------------------------------------------------
 // Mocked sign-in gate -> loading skeleton -> content
 //
@@ -751,6 +820,8 @@ window.addEventListener("message", handleParentMessage);
 resetStateForTemplate(getSelectedTemplate());
 populateDropdownMenu();
 syncDropdownTrigger();
+populateAccountMenu();
+syncAccountTrigger();
 renderAll();
 restoreSessionIfPresent();
 

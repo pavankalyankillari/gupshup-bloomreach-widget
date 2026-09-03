@@ -281,6 +281,61 @@ code {
 }
 .card-hint { font-size: 12px; color: #9aa1ac; }
 
+/* channel pills */
+.channel-row {
+  display: flex;
+  gap: 8px;
+}
+
+.channel-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1.5px solid #e6e2f3;
+  background: #fff;
+  color: #6b7280;
+}
+
+.channel-pill.active {
+  border-color: #5e34f1;
+  background: #5e34f1;
+  color: #fff;
+}
+
+.channel-pill.disabled {
+  cursor: not-allowed;
+  color: #b0b5bf;
+}
+
+.channel-soon {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #9aa1ac;
+  background: #f1f2f5;
+  padding: 2px 6px;
+  border-radius: 20px;
+}
+
+.account-status-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.account-status-badge.verified { color: #1a8f4c; background: #e6f7ed; }
+.account-status-badge.pending { color: #b7791f; background: #fbf1de; }
+
 .empty-card {
   border: 1px dashed #dbdfe6;
   border-radius: 12px;
