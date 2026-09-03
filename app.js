@@ -105,7 +105,7 @@ const TEMPLATES = [
 // so Bloomreach's "Test webhook" button, and eventually real sends, have a
 // live 200-OK endpoint to exercise the integration against instead of 404ing
 // on a placeholder domain. Swap for the real Gupshup endpoint once defined.
-const GUPSHUP_SEND_URL = "https://pending-exists-bryant-someone.trycloudflare.com/webhooks/whatsapp/send";
+const GUPSHUP_SEND_URL = "https://critics-hosting-vincent-sorts.trycloudflare.com/webhooks/whatsapp/send";
 
 const BUTTON_ICON = { url: "&#128279;", phone: "&#128222;", quick_reply: "&#8617;" };
 
