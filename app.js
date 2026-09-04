@@ -171,6 +171,11 @@ const cancelAddAccount = document.getElementById("cancelAddAccount");
 const submitAddAccount = document.getElementById("submitAddAccount");
 const adminAccountsList = document.getElementById("adminAccountsList");
 
+const accountSettingsBtn = document.getElementById("accountSettingsBtn");
+const homeBtn = document.getElementById("homeBtn");
+const composerView = document.getElementById("composerView");
+const accountSettingsView = document.getElementById("accountSettingsView");
+
 const variablesContainer = document.getElementById("variablesContainer");
 const variablesEmpty = document.getElementById("variablesEmpty");
 
@@ -384,6 +389,23 @@ submitAddAccount.addEventListener("click", () => {
   populateAccountMenu();
   showToast(`Account "${id}" added (mock — not persisted server-side).`);
 });
+
+// ---------------------------------------------------------------------
+// Page navigation — composer <-> Account Settings
+// ---------------------------------------------------------------------
+
+function showAccountSettingsView() {
+  composerView.style.display = "none";
+  accountSettingsView.style.display = "block";
+}
+
+function showComposerView() {
+  accountSettingsView.style.display = "none";
+  composerView.style.display = "grid";
+}
+
+accountSettingsBtn.addEventListener("click", showAccountSettingsView);
+homeBtn.addEventListener("click", showComposerView);
 
 function renderVariableFields() {
   const tpl = getSelectedTemplate();

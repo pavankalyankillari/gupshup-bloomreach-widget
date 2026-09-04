@@ -8,7 +8,7 @@
 <!-- Bump the ?v= query param on these two whenever styles.css/app.js change —
      GitHub Pages doesn't allow custom cache headers, so this is the only
      reliable way to bust stale browser/CDN caching of these static files. -->
-<link rel="stylesheet" href="styles.css?v=11" />
+<link rel="stylesheet" href="styles.css?v=12" />
 </head>
 <body>
 
@@ -67,6 +67,7 @@
 
     <header class="top-bar">
       <div class="top-bar-title">
+        <button type="button" class="settings-link" id="accountSettingsBtn">&#9881; Account Settings</button>
         <h1 class="page-title">WhatsApp Message Composer</h1>
         <p class="page-sub">Configure the WhatsApp message this campaign step will send.</p>
       </div>
@@ -83,7 +84,7 @@
       </div>
     </header>
 
-    <div class="content-grid">
+    <div class="content-grid" id="composerView">
 
       <!-- LEFT: configuration -->
       <div class="form-col">
@@ -119,40 +120,6 @@
             </button>
             <div class="dd-menu" id="accountMenu"></div>
           </div>
-        </section>
-
-        <!-- Admin: manage enterprise accounts -->
-        <section class="card">
-          <div class="card-header">
-            <h2 class="card-title">Admin &mdash; Enterprise Accounts</h2>
-            <button type="button" class="link admin-toggle" id="addAccountToggle">+ Add account</button>
-          </div>
-          <span class="card-hint">Accounts and channels connected to this Gupshup integration.</span>
-
-          <div class="admin-form" id="addAccountForm" style="display:none;">
-            <label class="field-label" style="margin-top:14px;">Account ID</label>
-            <input type="text" class="field-input" id="newAccountId" placeholder="e.g. amway-whatsapp-in" />
-
-            <label class="field-label" style="margin-top:12px;">Password</label>
-            <input type="password" class="field-input" id="newAccountPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" />
-
-            <label class="field-label" style="margin-top:12px;">Channel</label>
-            <div class="channel-row">
-              <button type="button" class="channel-pill active" id="newAccountChannel" data-channel="whatsapp">WhatsApp</button>
-              <button type="button" class="channel-pill disabled" disabled>SMS <span class="channel-soon">Soon</span></button>
-              <button type="button" class="channel-pill disabled" disabled>RCS <span class="channel-soon">Soon</span></button>
-            </div>
-
-            <div class="field-error" id="newAccountError" style="display:none;">Account ID and password are both required.</div>
-
-            <div class="action-row" style="margin-top:14px;">
-              <button type="button" class="btn btn-secondary" id="cancelAddAccount">Cancel</button>
-              <button type="button" class="btn btn-primary" id="submitAddAccount">Add account</button>
-            </div>
-            <div class="field-hint">Not persisted server-side in this PoC &mdash; a real implementation would store this via the backend, and never echo the password back.</div>
-          </div>
-
-          <div class="admin-account-list" id="adminAccountsList"></div>
         </section>
 
         <!-- Campaign type -->
@@ -331,12 +298,58 @@
       </div>
 
     </div>
+
+    <!-- Account Settings — its own page, reached via the top-left link -->
+    <div id="accountSettingsView" style="display:none;">
+      <div class="settings-page-header">
+        <button type="button" class="btn btn-secondary" id="homeBtn">&#8962; Home</button>
+        <div>
+          <h1 class="page-title">Account Settings</h1>
+          <p class="page-sub">Manage the enterprise accounts and channels connected to this Gupshup integration.</p>
+        </div>
+      </div>
+
+      <div class="settings-page-body">
+        <section class="card">
+          <div class="card-header">
+            <h2 class="card-title">Enterprise Accounts</h2>
+            <button type="button" class="link admin-toggle" id="addAccountToggle">+ Add account</button>
+          </div>
+          <span class="card-hint">Accounts and channels connected to this Gupshup integration.</span>
+
+          <div class="admin-form" id="addAccountForm" style="display:none;">
+            <label class="field-label" style="margin-top:14px;">Account ID</label>
+            <input type="text" class="field-input" id="newAccountId" placeholder="e.g. amway-whatsapp-in" />
+
+            <label class="field-label" style="margin-top:12px;">Password</label>
+            <input type="password" class="field-input" id="newAccountPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" />
+
+            <label class="field-label" style="margin-top:12px;">Channel</label>
+            <div class="channel-row">
+              <button type="button" class="channel-pill active" id="newAccountChannel" data-channel="whatsapp">WhatsApp</button>
+              <button type="button" class="channel-pill disabled" disabled>SMS <span class="channel-soon">Soon</span></button>
+              <button type="button" class="channel-pill disabled" disabled>RCS <span class="channel-soon">Soon</span></button>
+            </div>
+
+            <div class="field-error" id="newAccountError" style="display:none;">Account ID and password are both required.</div>
+
+            <div class="action-row" style="margin-top:14px;">
+              <button type="button" class="btn btn-secondary" id="cancelAddAccount">Cancel</button>
+              <button type="button" class="btn btn-primary" id="submitAddAccount">Add account</button>
+            </div>
+            <div class="field-hint">Not persisted server-side in this PoC &mdash; a real implementation would store this via the backend, and never echo the password back.</div>
+          </div>
+
+          <div class="admin-account-list" id="adminAccountsList"></div>
+        </section>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
 </div>
 
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>
