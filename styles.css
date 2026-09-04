@@ -336,6 +336,52 @@ code {
 .account-status-badge.verified { color: #1a8f4c; background: #e6f7ed; }
 .account-status-badge.pending { color: #b7791f; background: #fbf1de; }
 
+/* admin — manage enterprise accounts */
+.admin-toggle {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.admin-form {
+  border-top: 1px solid #f0f1f3;
+  margin-top: 14px;
+  padding-top: 4px;
+}
+
+.admin-account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 14px;
+}
+
+.admin-account-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid #f0f1f3;
+}
+.admin-account-row:first-child { border-top: none; padding-top: 0; }
+
+.admin-account-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: #f0ecff;
+  color: #5e34f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.admin-account-body { flex: 1; min-width: 0; }
+.admin-account-id { font-size: 13px; font-weight: 600; color: #1a1f36; }
+.admin-account-meta { font-size: 12px; color: #8a919e; margin-top: 1px; }
+
 .empty-card {
   border: 1px dashed #dbdfe6;
   border-radius: 12px;

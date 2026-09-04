@@ -8,6 +8,21 @@
 // https://documentation.bloomreach.com/engagement/docs/configure-and-implement-widget-webhooks
 // widget_hello -> app_hello -> widget_initialized -> (on Save/Test) app_request_state -> widget_state
 
+// ---------------------------------------------------------------------
+// Tenant identity — read from the iframe's own query string, since
+// Bloomreach's postMessage protocol has no concept of "which Gupshup
+// customer is this" (app_hello only distinguishes new vs. existing node
+// config). In production this would be a signed/opaque token minted when
+// the marketer connects, not a plain project_token passed in the clear —
+// this is PROPOSED wiring for the PoC, not the final security model.
+// ---------------------------------------------------------------------
+const tenantParams = new URLSearchParams(window.location.search);
+const TENANT = {
+  orgId: tenantParams.get("org_id") || "",
+  projectName: tenantParams.get("project_name") || "",
+  projectToken: tenantParams.get("project_token") || ""
+};
+
 // There's no Bloomreach API to enumerate a project's real customer/event
 // properties (confirmed against their docs — schemas are custom per project
 // and only browsable in the Data Manager UI). Bloomreach's own Personalization
@@ -112,7 +127,7 @@ const BUTTON_ICON = { url: "&#128279;", phone: "&#128222;", quick_reply: "&#8617
 // Mock registered WhatsApp Business enterprise accounts/numbers for this
 // Gupshup customer — a real account would list whatever numbers they've
 // actually registered and had verified.
-const ENTERPRISE_ACCOUNTS = [
+let ENTERPRISE_ACCOUNTS = [
   { id: "acct_primary", label: "Gupshup Retail — Primary", phone: "+91 98765 43210", status: "Verified" },
   { id: "acct_us", label: "Gupshup Retail — US", phone: "+1 415 555 0199", status: "Verified" },
   { id: "acct_eu_backup", label: "Gupshup Retail — EU (Backup)", phone: "+44 7911 123456", status: "Pending" }
@@ -144,6 +159,17 @@ const accountMenu = document.getElementById("accountMenu");
 const accountTitle = document.getElementById("accountTitle");
 const accountSub = document.getElementById("accountSub");
 const accountStatus = document.getElementById("accountStatus");
+
+const signedInOrg = document.getElementById("signedInOrg");
+const addAccountToggle = document.getElementById("addAccountToggle");
+const addAccountForm = document.getElementById("addAccountForm");
+const newAccountId = document.getElementById("newAccountId");
+const newAccountPassword = document.getElementById("newAccountPassword");
+const newAccountChannel = document.getElementById("newAccountChannel");
+const newAccountError = document.getElementById("newAccountError");
+const cancelAddAccount = document.getElementById("cancelAddAccount");
+const submitAddAccount = document.getElementById("submitAddAccount");
+const adminAccountsList = document.getElementById("adminAccountsList");
 
 const variablesContainer = document.getElementById("variablesContainer");
 const variablesEmpty = document.getElementById("variablesEmpty");
@@ -258,7 +284,7 @@ function populateAccountMenu() {
     opt.innerHTML = `
       <div class="dd-option-main">
         <div class="dd-option-title">${a.label}</div>
-        <div class="dd-option-sub">${a.phone}</div>
+        <div class="dd-option-sub">${a.phone || "Added via Admin — no phone on file"}</div>
       </div>
       <span class="account-status-badge ${a.status.toLowerCase()}">${a.status}</span>
     `;
@@ -275,7 +301,7 @@ function populateAccountMenu() {
 function syncAccountTrigger() {
   const account = getSelectedAccount();
   accountTitle.textContent = account.label;
-  accountSub.textContent = account.phone;
+  accountSub.textContent = account.phone || "Added via Admin — no phone on file";
   accountStatus.textContent = account.status;
   accountStatus.className = "account-status-badge " + account.status.toLowerCase();
 }
@@ -287,8 +313,77 @@ accountTrigger.addEventListener("click", (e) => {
 document.addEventListener("click", () => accountMenu.classList.remove("open"));
 
 // ---------------------------------------------------------------------
-// Variables
+// Admin — manage enterprise accounts
+// Only WhatsApp is selectable here (SMS/RCS disabled, same "coming soon"
+// gating as the main Channel selector) since that's the only channel this
+// PoC actually supports end to end.
 // ---------------------------------------------------------------------
+
+function renderAdminAccountsList() {
+  adminAccountsList.innerHTML = "";
+  ENTERPRISE_ACCOUNTS.forEach((a) => {
+    const row = document.createElement("div");
+    row.className = "admin-account-row";
+    row.innerHTML = `
+      <div class="admin-account-icon">${(a.channel || "whatsapp").slice(0, 2).toUpperCase()}</div>
+      <div class="admin-account-body">
+        <div class="admin-account-id">${a.label}</div>
+        <div class="admin-account-meta">${a.phone || "No phone on file"} &middot; ${(a.channel || "whatsapp").toUpperCase()}</div>
+      </div>
+      <span class="account-status-badge ${a.status.toLowerCase()}">${a.status}</span>
+    `;
+    adminAccountsList.appendChild(row);
+  });
+}
+
+function resetAddAccountForm() {
+  newAccountId.value = "";
+  newAccountPassword.value = "";
+  newAccountError.style.display = "none";
+  newAccountId.classList.remove("has-error");
+  newAccountPassword.classList.remove("has-error");
+}
+
+addAccountToggle.addEventListener("click", () => {
+  const visible = addAccountForm.style.display !== "none";
+  addAccountForm.style.display = visible ? "none" : "block";
+  if (!visible) newAccountId.focus();
+});
+
+cancelAddAccount.addEventListener("click", () => {
+  resetAddAccountForm();
+  addAccountForm.style.display = "none";
+});
+
+submitAddAccount.addEventListener("click", () => {
+  const id = newAccountId.value.trim();
+  const password = newAccountPassword.value;
+
+  if (!id || !password) {
+    newAccountError.style.display = "flex";
+    newAccountId.classList.toggle("has-error", !id);
+    newAccountPassword.classList.toggle("has-error", !password);
+    return;
+  }
+
+  // The password is only used here to represent "connecting" the account —
+  // it's intentionally never stored in state or echoed into the webhook
+  // payload. A real implementation would exchange it with the backend once
+  // and never hold it client-side at all.
+  ENTERPRISE_ACCOUNTS.push({
+    id,
+    label: id,
+    phone: null,
+    status: "Pending",
+    channel: "whatsapp"
+  });
+
+  resetAddAccountForm();
+  addAccountForm.style.display = "none";
+  renderAdminAccountsList();
+  populateAccountMenu();
+  showToast(`Account "${id}" added (mock — not persisted server-side).`);
+});
 
 function renderVariableFields() {
   const tpl = getSelectedTemplate();
@@ -452,6 +547,7 @@ function buildWebhookObject(tpl) {
   const account = getSelectedAccount();
   const bodyTemplate = {
     channel: "whatsapp",
+    bloomreach_project: { org_id: TENANT.orgId, project_name: TENANT.projectName, project_token: TENANT.projectToken },
     sender: { account_id: account.id, phone: account.phone },
     template_id: tpl.id,
     template_category: tpl.category,
@@ -686,7 +782,8 @@ function clearSession() {
 
 function enterComposer(email, project, skipSkeleton) {
   signedInUser.textContent = email || "demo@gupshup.io";
-  signedInProject.textContent = project || "default";
+  signedInProject.textContent = TENANT.projectName || project || "default";
+  signedInOrg.textContent = TENANT.orgId ? TENANT.orgId + " / " : "";
   loginScreen.style.display = "none";
 
   if (skipSkeleton) {
@@ -705,7 +802,7 @@ function enterComposer(email, project, skipSkeleton) {
 
 loginSubmit.addEventListener("click", () => {
   const email = loginEmail.value || "demo@gupshup.io";
-  const project = loginProject.value || "default";
+  const project = TENANT.projectName || loginProject.value || "default";
   saveSession(email, project);
   enterComposer(email, project, false);
 });
@@ -822,7 +919,11 @@ populateDropdownMenu();
 syncDropdownTrigger();
 populateAccountMenu();
 syncAccountTrigger();
+renderAdminAccountsList();
 renderAll();
+
+if (TENANT.projectName) loginProject.value = TENANT.projectName;
+
 restoreSessionIfPresent();
 
 if (isEmbedded()) {
